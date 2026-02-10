@@ -10,14 +10,16 @@ use std::collections::HashMap;
 pub struct CompileContext {
     pub variables: HashMap<String, ComptimeVariable>,
     pub functions: Vec<HashMap<String, CompileTimeFunctionForCheck>>,
-    pub scopes:Vec<HashMap<String,ComptimeVariable>>
+    pub scopes:Vec<HashMap<String,ComptimeVariable>>,
+    current_variable_tag:String
 }
 impl CompileContext {
     pub fn new() -> Self {
         Self {
             variables: HashMap::new(),
             functions: vec![HashMap::new()],
-            scopes:vec![HashMap::new()]
+            scopes:vec![HashMap::new()],
+            current_variable_tag:"default".into()
         }
     }
     pub fn get_type(type_to_identify: &str) -> Result<ComptimeValueType, CompileError> {
@@ -76,5 +78,6 @@ impl CompileContext {
 
 pub struct ComptimeVariable {
     pub value_type: ComptimeValueType,
+    pub tag:String,
     pub is_const: bool,
 }

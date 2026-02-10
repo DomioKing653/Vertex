@@ -51,6 +51,7 @@ pub struct Compiler {
     pub context: CompileContext,
     pub out: Vec<Instructions>,
     pub macros: MacroManager,
+    pub current_fn:String
 }
 
 
@@ -65,6 +66,7 @@ impl Compiler {
             context: CompileContext::new(),
             out: Vec::new(),
             macros: MacroManager::new(),
+            current_fn:"none".into()
         }
     }
     pub fn optimize(&mut self) {
@@ -217,7 +219,7 @@ impl Compilable for VariableAccessNode {
                 name: self.variable_name.clone(),
             },
         )?;
-        compiler.out.push(LoadVar(self.variable_name.clone()));
+        compiler.out.push(LoadVar(var.tag.clone()));
         Ok(var.value_type.clone())
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
@@ -286,12 +288,13 @@ impl Compilable for VariableDefineNode {
                 });
             }
         };
-
-        let var_name = self.var_name.clone();
-        compiler.context.add_variable(var_name, ComptimeVariable { value_type: final_type, is_const: self.is_const })?;
+ 
+        compiler.context.add_variable(self.var_name.clone(), ComptimeVariable { value_type: final_type, is_const: self.is_const,tag:format!("{}_{}",self.var_name.clone(),compiler.current_fn.clone()) })?;
+        let tag = compiler.context.get_variable(&self.var_name).unwrap().tag.clone();
         compiler
             .out
-            .push(Instructions::SaveVar(self.var_name.clone()));
+            .push(Instructions::SaveVar(tag));
+        
         Ok(Void)
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
@@ -341,8 +344,14 @@ impl Compilable for VariableAssignNode {
                 found: value_type,
             });
         }
+        unsafe{
 
-        compiler.out.push(Instructions::SaveVar(self.name.clone()));
+          let tag = compiler.context.get_variable(&self.name).unwrap_unchecked().tag.clone();
+
+          compiler.out.push(Instructions::SaveVar(tag));
+
+        }
+
         Ok(value_type)
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
@@ -381,26 +390,31 @@ impl Compilable for FunctionCallNode {
                 result
             }
             CallType::Fn => {
+                let old_fn = compiler.current_fn.clone();
                 let called_function:CompileTimeFunctionForCheck = compiler.context.get_fn(&self.name)?;
+                compiler.current_fn=self.name.clone();
                 if self.args.len()!=called_function.args.len() {
                     return Err(CompileError::UnexpectedFunctionArguments { name: self.name.clone(), expected: called_function.args.len(), found: self.args.len() });
                 }
                 compiler.context.enter_scope();
                 for (called_arg, fnc_arg) in self.args.iter().zip(called_function.args.iter()) {
                     let called_args_type = called_arg.compile(compiler)?;
-                    compiler.out.push(Instructions::SaveVar(fnc_arg.name.clone()));
+
+                    compiler.context.add_variable(fnc_arg.name.clone(), ComptimeVariable { value_type: called_args_type.clone(), is_const: false,tag:format!("{}{}",fnc_arg.name.clone(),self.name.clone()) })?; 
+                    let tag = compiler.context.get_variable(&fnc_arg.name).unwrap();
+                    compiler.out.push(Instructions::SaveVar(tag.tag.clone()));
                     let final_fnc_type = CompileContext::get_type(&fnc_arg.argument_type)?;
                     if called_args_type != final_fnc_type {
                         return Err(TypeMismatch { expected: final_fnc_type, found: called_args_type });
                        
                     }
-                    compiler.context.add_variable(fnc_arg.name.clone(), ComptimeVariable { value_type: called_args_type, is_const: false })?; 
                 }
                 for statement in called_function.body  {
                     statement.compile(compiler)?;
                     
                 }
                 compiler.context.exit_scope(); 
+                compiler.current_fn=old_fn;
                 Ok(Void)
             }
         }

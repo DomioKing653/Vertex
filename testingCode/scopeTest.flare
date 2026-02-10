@@ -1,0 +1,9 @@
+fnc main():void{
+  var x = 5; 
+}
+fnc test():void{
+  var x = 15;
+  main()
+  writeLn!(x)
+}
+test()
