@@ -3,18 +3,18 @@ fnc printunderscores(count:numb):void{
 	while (it < count + 2)
 	{
 		it = it + 1;
-		write!("_")
+		write!("_");
 	}
-	writeLn!("") 
+	writeLn!("");
 }
 
 const size:numb = 10;
-printunderscores(size)
+printunderscores(size);
 var it:numb = 0;
 
 while (it < size)
 {
-	write!("|")
+	write!("|");
 	it = it + 1;
 	var it2:numb = 0;
 	while (it2 < size)
@@ -29,8 +29,8 @@ while (it < size)
 		{
 			tile = " ";
 		}
-		write!(tile)
+		write!(tile);
 	}
-	writeLn!("|")
+	writeLn!("|");
 }
-printunderscores(size)
+printunderscores(size);
