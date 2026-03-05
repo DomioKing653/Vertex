@@ -13,8 +13,8 @@ For printing to console were using build-in macros like ```writeLn!()``` and ```
 ```flare
 //defining hello world const
 const hello_world:string = "Hello world!";
-//writing out the output but noticy that there is no semicolon becouse writeLn!() is an expression
-writeLn!(hello_world) 
+//writing out the output 
+writeLn!(hello_world); 
 ```
 Then run code:
 ```bash
@@ -161,7 +161,7 @@ fnc name(arg1:type,arg2:type):returnType //return type must be declared
 var foo = name_of_the_function(arguments);
 
 //or
-name_of_the_function(arguments)
+name_of_the_function(arguments);
 ```
 
 
