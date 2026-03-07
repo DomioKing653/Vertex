@@ -29,6 +29,58 @@ pub fn constant_folding(code: Vec<Instructions>) -> (Vec<Instructions>, HashMap<
                 out.push(Instructions::PushNumber(a + b));
                 i += 3;
             }
+            (
+                Some(Instructions::PushNumber(a)),
+                Some(Instructions::PushNumber(b)),
+                Some(Instructions::Sub),
+            ) => {
+                // Map all three old indices to the single new index
+                old_to_new.insert(i, out.len());
+                old_to_new.insert(i + 1, out.len());
+                old_to_new.insert(i + 2, out.len());
+
+                out.push(Instructions::PushNumber(a - b));
+                i += 3;
+            }
+            (
+                Some(Instructions::PushNumber(a)),
+                Some(Instructions::PushNumber(b)),
+                Some(Instructions::Mul),
+            ) => {
+                // Map all three old indices to the single new index
+                old_to_new.insert(i, out.len());
+                old_to_new.insert(i + 1, out.len());
+                old_to_new.insert(i + 2, out.len());
+
+                out.push(Instructions::PushNumber(a * b));
+                i += 3;
+            }
+            (
+                Some(Instructions::PushNumber(a)),
+                Some(Instructions::PushNumber(b)),
+                Some(Instructions::Div),
+            ) => {
+                // Map all three old indices to the single new index
+                old_to_new.insert(i, out.len());
+                old_to_new.insert(i + 1, out.len());
+                old_to_new.insert(i + 2, out.len());
+
+                out.push(Instructions::PushNumber(a * b));
+                i += 3;
+            }
+            (
+                Some(Instructions::PushNumber(a)),
+                Some(Instructions::PushNumber(b)),
+                Some(Instructions::Modulo),
+            ) => {
+                // Map all three old indices to the single new index
+                old_to_new.insert(i, out.len());
+                old_to_new.insert(i + 1, out.len());
+                old_to_new.insert(i + 2, out.len());
+
+                out.push(Instructions::PushNumber(a % b));
+                i += 3;
+            }
 
             _ => {
                 old_to_new.insert(i, out.len());
