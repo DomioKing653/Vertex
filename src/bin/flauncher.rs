@@ -49,7 +49,7 @@ fn main() {
                     print!("cannot find main.flare in ./src");
                     process::exit(-1);
                 });
-                build_directory(format!("src/main.flare"), config.name, false);
+                build_directory("src/main.flare".to_string(), config.name, false);
             }
             _ => {}
         }

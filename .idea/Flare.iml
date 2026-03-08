@@ -2,7 +2,7 @@
 <module type="EMPTY_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Python" name="Python facet">
-      <configuration sdkName="Python 3.13 (Flare)" />
+      <configuration sdkName="Python 3.12 (Flare)" />
     </facet>
   </component>
   <component name="NewModuleRootManager">
@@ -10,9 +10,10 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/testing/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Python 3.13 (Flare) interpreter library" level="application" />
+    <orderEntry type="library" name="Python 3.12 (Flare) interpreter library" level="application" />
   </component>
 </module>

@@ -16,7 +16,9 @@ use std::{
     time::Instant,
 };
 use std::collections::HashMap;
+use walkdir::WalkDir;
 use crate::backend::linker::link::GlobalSymbols;
+use crate::backend::linker::obj_file::ObjFile;
 
 fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec<Instructions>) {
     for token in tokens {
@@ -29,7 +31,7 @@ fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec
 }
 //NOTE:This uses relative path from the compiler
 // so you need to cd in first, and then it run program main at the flauncher
-pub fn compile_file_to_bytecode(dir: String) -> Vec<Instructions> {
+pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
     /*
      * Lexer
      */
@@ -71,12 +73,14 @@ pub fn compile_file_to_bytecode(dir: String) -> Vec<Instructions> {
         process::exit(-3);
     }
     compiler.optimize();
-    compiler.out
+    ObjFile{
+        instructions:compiler.out
+    }
 }
 
 //NOTE:This is just entry point for the compilation process, and it
 // shouldn't be used any further in the compilation process
-pub fn build_directory(dir: String, out: String, debug: bool) {
+pub fn build_directory(dir: String, out: String, _debug: bool) {
     ensure_target_dir();
 
     // Start timing
@@ -93,15 +97,20 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
         out
     );
     //COMPILE PHASE
-    let mut instructions = compile_file_to_bytecode(dir);
+    let mut objs:Vec<ObjFile> = Vec::new();
 
-    /*  Print debug information if debug flag is enabled
-    if debug {
-        debug_print(tokens, parsed_ast, &compiler.out);
-    }*/
+    for file in get_flare_files_recursive(&dir) {
+        let obj_file = compile_file_to_bytecode(file.clone());
+        objs.push(obj_file);
 
+    }
+
+
+    //TODO:This will be used to write the whole .out after the linking
+    /*
     let out_path = format!("out/{}", out);
-    compile_instr_to_bytes(out_path, &mut instructions).expect("Cannot load binary file");
+    compile_instr_to_bytes(out_path, &mut obj_file.instructions).expect("Cannot load binary file");
+    */
 
     // Calculate elapsed time and show success message
     let elapsed = start_time.elapsed();
@@ -199,4 +208,22 @@ fn ensure_target_dir() {
     if !target.exists() {
         fs::create_dir(target).expect("Cannot create target directory");
     }
+}
+
+
+fn get_flare_files_recursive(dir: &str) -> Vec<String> {
+    let mut files = Vec::new();
+
+    for entry in WalkDir::new(dir) {
+        let entry = entry.expect("Cannot read entry");
+        if entry.file_type().is_file() {
+            if let Some(ext) = entry.path().extension() {
+                if ext == "flare" {
+                    files.push(entry.path().to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+
+    files
 }

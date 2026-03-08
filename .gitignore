@@ -2,6 +2,7 @@
 /.idea
 ## language
 /.cargo
+/.venv
 # build
 /target
 /target/.rustc_info.json
