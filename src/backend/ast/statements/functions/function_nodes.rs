@@ -37,6 +37,9 @@ impl Compilable for FunctionDefineNode {
 
         Ok(())
     }
+    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut crate::backend::linker::link::GlobalSymbols) {
+        
+    }
 }
 
 impl Debug for FunctionDefineNode {

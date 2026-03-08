@@ -47,6 +47,9 @@ impl Compilable for WhileStatement {
     ) -> std::fmt::Result {
         writeln!(_f, "if")
     }
+    fn add_to_lookup(&self,compiler:&mut byte_code::Compiler,symbols:&mut crate::backend::linker::link::GlobalSymbols) {
+        
+    }
 }
 
 impl Debug for WhileStatement {

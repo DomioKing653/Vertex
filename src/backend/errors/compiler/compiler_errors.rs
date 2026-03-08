@@ -1,7 +1,7 @@
 use crate::backend::compiler::comptime_variable_checker::comptime_value_for_check::ComptimeValueType;
 use thiserror::Error;
 
-//FIXME::Update to error handeling with lines and update the error messages.
+//TODO:Update to error handeling with lines and update the error messages.
 
 #[derive(Debug, Error)]
 pub enum CompileError {

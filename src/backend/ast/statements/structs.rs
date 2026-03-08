@@ -21,6 +21,9 @@ impl Compilable for StructDefineNode{
     fn fmt_with_indent(&self, f: &mut std::fmt::Formatter<'_>, indent: usize) -> std::fmt::Result {
         todo!()
     }
+    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut crate::backend::linker::link::GlobalSymbols) {
+        
+    }
 }
 impl Debug for StructDefineNode{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
