@@ -8,7 +8,7 @@
 
 
 use flare::backend::{
-    compiler::saving_bytes::save::build,
+    compiler::saving_bytes::save::build_directory,
     errors::cli_errors::CommandLineError::{
         self, BuildHasJustTwoArg, NoFileSpecifiedForBuild, NoSuchCommand,
     },
@@ -41,7 +41,7 @@ fn run_cli() -> Result<(), CommandLineError> {
     match args[1].as_str() {
         "build" => {
             let (debug, source, output) = parse_build_args(&args[2..])?;
-            build(source, output, debug);
+            build_directory(source, output, debug);
             Ok(())
         }
         "run" => {
@@ -53,7 +53,7 @@ fn run_cli() -> Result<(), CommandLineError> {
         }
         "exec" => {
             let (debug, source, output) = parse_build_args(&args[2..])?;
-            build(source.clone(), output.clone(), debug);
+            build_directory(source.clone(), output.clone(), debug);
             run_code(&format!("out/{}", &output));
             Ok(())
         }

@@ -48,7 +48,7 @@ where
 pub trait Compilable: Debug + CompilableClone {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError>;
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result;
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols);
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols);
 }
 pub fn indent_fn(n: usize) -> String {
     "  ".repeat(n)
@@ -65,7 +65,7 @@ pub struct Compiler {
     pub out: Vec<Instructions>,
     pub macros: MacroManager,
     pub current_fn: String,
-    pub last_return_adress: Option<usize>,
+    pub last_return_address: Option<usize>,
 }
 
 impl Default for Compiler {
@@ -80,7 +80,7 @@ impl Compiler {
             out: Vec::new(),
             macros: MacroManager::new(),
             current_fn: "none".into(),
-            last_return_adress: None,
+            last_return_address: None,
         }
     }
     pub fn optimize(&mut self) {
@@ -96,7 +96,7 @@ impl Compilable for NumberNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}Number({})", indent_fn(indent), self.number)
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 
@@ -110,7 +110,7 @@ impl Compilable for FloatNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}Float({})", indent_fn(indent), self.number)
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 }
@@ -123,7 +123,7 @@ impl Compilable for PrefixExpressionNode {
         write!(f, "{}{:?}", indent_fn(indent + 1), self.prefix)?;
         self.value.fmt_with_indent(f, 0)
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 }
@@ -245,7 +245,7 @@ impl Compilable for BinaryOpNode {
         self.right.fmt_with_indent(f, indent + 2)?;
         Ok(())
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 }
@@ -265,9 +265,9 @@ impl Compilable for ProgramNode {
         }
         Ok(())
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         for node in &self.program_nodes{
-            node.add_to_lookup(compiler, symbols);
+            node.add_to_lookup(symbols);
         }
 
     }
@@ -286,7 +286,7 @@ impl Compilable for VariableAccessNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}Var({})", indent_fn(indent), self.variable_name)
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 }
@@ -299,7 +299,7 @@ impl Compilable for StringNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}String({})", indent_fn(indent), self.value)
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 
@@ -384,7 +384,7 @@ impl Compilable for VariableDefineNode {
         }
         Ok(())
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
        symbols.symbols.insert(self.var_name.clone(), Symbol{
            symbol_value_type:CompileContext::get_type(self.value_type.clone().unwrap_or_else(||"void".to_string()).as_ref()).unwrap(),
            symbol_type:SymbolType::Variable
@@ -402,7 +402,7 @@ impl Compilable for BoolNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}String({:?})", indent_fn(indent), self.value)
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 }
@@ -431,8 +431,8 @@ impl Compilable for VariableAssignNode {
                 found: value_type,
             });
         }
-        // SAFETY: At this moment we surely know that the variable will exist and we dont need to
-        // do normal 'unwrap'
+        // SAFETY: At this moment we surely know that the variable will exist, and we don't need to
+        // do normal 'unwrap' because this is little bit faster
         unsafe {
             let tag = compiler
                 .context
@@ -451,7 +451,7 @@ impl Compilable for VariableAssignNode {
         self.value.fmt(f)?;
         Ok(())
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 }
@@ -470,7 +470,7 @@ impl Compilable for ArrayNode {
         }
         writeln!(f, "{}]", " ".repeat(indent))
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         
     }
 }
@@ -479,7 +479,7 @@ impl Compilable for FunctionCallNode {
         match self.call_type {
             CallType::Macro => {
                 // HACK: temporarily remove the macro from the map so we can call `compile`.
-                // Otherwise the borrow checker complains because `compile` needs
+                // Otherwise, the borrow checker complains because `compile` needs
                 // a mutable reference to `compiler`, while the macro is stored inside it.
                 let mac = compiler.macros.macros.remove(&self.name).ok_or(
                     CompileError::UnknownMacro {
@@ -536,13 +536,13 @@ impl Compilable for FunctionCallNode {
     fn fmt_with_indent(&self, _f: &mut Formatter<'_>, _indent: usize) -> fmt::Result {
         writeln!(_f, "{}{}(...)", indent_fn(_indent), self.name)
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
        
         
     }
 }
 
-//FIXME:Add check for cyclic importing until imports are not macroed.
+//FIXME:Add check for cyclic importing until imports are not macro.
 impl Compilable for ImportNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         
@@ -552,7 +552,7 @@ impl Compilable for ImportNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         unimplemented!()
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
         /*
          * Lexer
          */
@@ -577,7 +577,7 @@ impl Compilable for ImportNode {
             println!("\x1b[1;31m{}\x1b[0m", e);
             process::exit(-2)
         });
-        parsed_ast.add_to_lookup(compiler, symbols);
+        parsed_ast.add_to_lookup(symbols);
         
     }
 }

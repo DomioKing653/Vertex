@@ -15,6 +15,8 @@ use std::{
     process,
     time::Instant,
 };
+use std::collections::HashMap;
+use crate::backend::linker::link::GlobalSymbols;
 
 fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec<Instructions>) {
     for token in tokens {
@@ -26,7 +28,7 @@ fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec
     }
 }
 //NOTE:This uses relative path from the compiler
-// so you need to cd in first and than it run program main at the flauncher
+// so you need to cd in first, and then it run program main at the flauncher
 pub fn compile_file_to_bytecode(dir: String) -> Vec<Instructions> {
     /*
      * Lexer
@@ -52,6 +54,13 @@ pub fn compile_file_to_bytecode(dir: String) -> Vec<Instructions> {
         process::exit(-2)
     });
     /*
+     * Lookup table
+    */
+    let mut lookup = GlobalSymbols{
+        symbols:HashMap::new(),
+    };
+    parsed_ast.add_to_lookup(&mut lookup);
+    /*
      *Bytecode
      */
     let mut compiler = Compiler::new();
@@ -65,16 +74,16 @@ pub fn compile_file_to_bytecode(dir: String) -> Vec<Instructions> {
     compiler.out
 }
 
-//NOTE:This is just entery point for the compilation process and it
-// shouldnt be used any further in the compilation process
-pub fn build(dir: String, out: String, debug: bool) {
+//NOTE:This is just entry point for the compilation process, and it
+// shouldn't be used any further in the compilation process
+pub fn build_directory(dir: String, out: String, debug: bool) {
     ensure_target_dir();
 
     // Start timing
     let start_time = Instant::now();
 
     // Get the absolute path for display
-    let src_path = std::path::Path::new(&dir)
+    let src_path = Path::new(&dir)
         .canonicalize()
         .unwrap_or_else(|_| std::path::PathBuf::from(&dir));
 
@@ -83,7 +92,7 @@ pub fn build(dir: String, out: String, debug: bool) {
         src_path.display(),
         out
     );
-
+    //COMPILE PHASE
     let mut instructions = compile_file_to_bytecode(dir);
 
     /*  Print debug information if debug flag is enabled

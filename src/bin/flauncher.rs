@@ -1,5 +1,5 @@
 //!Main flare package manager and linker
-use flare::backend::compiler::saving_bytes::save::build;
+use flare::backend::compiler::saving_bytes::save::build_directory;
 use serde::Deserialize;
 use std::env::{self};
 use std::fs::{self, File};
@@ -49,7 +49,7 @@ fn main() {
                     print!("cannot find main.flare in ./src");
                     process::exit(-1);
                 });
-                build(format!("src/main.flare"), config.name, false);
+                build_directory(format!("src/main.flare"), config.name, false);
             }
             _ => {}
         }

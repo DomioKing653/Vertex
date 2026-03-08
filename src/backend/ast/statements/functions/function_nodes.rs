@@ -7,6 +7,9 @@ use crate::backend::{
     },
     errors::compiler::compiler_errors::CompileError,
 };
+use crate::backend::linker::link::{GlobalSymbols, Symbol};
+use crate::backend::linker::link::SymbolType::Function;
+
 #[derive(Clone)]
 pub struct FunctionDefineNode {
     pub args: Vec<FunctionArgs>,
@@ -37,7 +40,14 @@ impl Compilable for FunctionDefineNode {
 
         Ok(())
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut crate::backend::linker::link::GlobalSymbols) {
+    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+        unsafe {
+            symbols.symbols.insert(self.id.clone(), Symbol {
+                symbol_value_type: CompileContext::get_type(&self.return_type.clone().unwrap_unchecked()).unwrap(),
+                symbol_type:Function
+
+            })
+        };
         
     }
 }

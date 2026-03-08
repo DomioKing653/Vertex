@@ -3,6 +3,8 @@ use crate::backend::{
     errors::compiler::compiler_errors::CompileError,
 };
 use std::fmt::Debug;
+use crate::backend::linker::link::GlobalSymbols;
+
 #[derive(Clone)]
 pub struct IfStatement {
     pub then_branch: Vec<Box<dyn Compilable>>,
@@ -54,7 +56,7 @@ impl Compilable for IfStatement {
         }
         Ok(())
     }
-    fn add_to_lookup(&self,compiler:&mut Compiler,symbols:&mut crate::backend::linker::link::GlobalSymbols) {
+    fn add_to_lookup(&self, symbols: &mut GlobalSymbols) {
         
     }
 }

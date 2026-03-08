@@ -6,6 +6,7 @@ use crate::backend::{
     },
     errors::compiler::compiler_errors::CompileError,
 };
+use crate::backend::linker::link::GlobalSymbols;
 
 #[derive(Clone)]
 pub struct WhileStatement {
@@ -47,7 +48,7 @@ impl Compilable for WhileStatement {
     ) -> std::fmt::Result {
         writeln!(_f, "if")
     }
-    fn add_to_lookup(&self,compiler:&mut byte_code::Compiler,symbols:&mut crate::backend::linker::link::GlobalSymbols) {
+    fn add_to_lookup(&self, symbols: &mut GlobalSymbols) {
         
     }
 }
