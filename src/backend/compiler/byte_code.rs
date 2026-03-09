@@ -32,6 +32,8 @@ use std::{
     fmt::{self, Debug, Formatter},
     fs, process,
 };
+use std::collections::HashMap;
+use crate::backend::errors::compiler::compiler_errors::CompileError::VariableRecreation;
 
 pub trait CompilableClone {
     fn clone_box(&self) -> Box<dyn Compilable>;
@@ -48,7 +50,7 @@ where
 pub trait Compilable: Debug + CompilableClone {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError>;
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result;
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols);
+    fn add_to_lookup(&self, compiler: &mut Compiler);
 }
 pub fn indent_fn(n: usize) -> String {
     "  ".repeat(n)
@@ -66,6 +68,7 @@ pub struct Compiler {
     pub macros: MacroManager,
     pub current_fn: String,
     pub last_return_address: Option<usize>,
+    pub lookup: GlobalSymbols,
 }
 
 impl Default for Compiler {
@@ -81,6 +84,9 @@ impl Compiler {
             macros: MacroManager::new(),
             current_fn: "none".into(),
             last_return_address: None,
+            lookup:GlobalSymbols{
+                symbols:HashMap::new(),
+            }
         }
     }
     pub fn optimize(&mut self) {
@@ -96,7 +102,7 @@ impl Compilable for NumberNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}Number({})", indent_fn(indent), self.number)
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         
     }
 
@@ -110,7 +116,7 @@ impl Compilable for FloatNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}Float({})", indent_fn(indent), self.number)
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         
     }
 }
@@ -123,7 +129,7 @@ impl Compilable for PrefixExpressionNode {
         write!(f, "{}{:?}", indent_fn(indent + 1), self.prefix)?;
         self.value.fmt_with_indent(f, 0)
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         
     }
 }
@@ -245,7 +251,7 @@ impl Compilable for BinaryOpNode {
         self.right.fmt_with_indent(f, indent + 2)?;
         Ok(())
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         
     }
 }
@@ -265,29 +271,11 @@ impl Compilable for ProgramNode {
         }
         Ok(())
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         for node in &self.program_nodes{
-            node.add_to_lookup(symbols);
+            node.add_to_lookup(compiler);
         }
 
-    }
-}
-
-impl Compilable for VariableAccessNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        let var = compiler.context.get_variable(&self.variable_name).ok_or(
-            CompileError::UndefinedVariable {
-                name: self.variable_name.clone(),
-            },
-        )?;
-        compiler.out.push(LoadVar(var.tag.clone()));
-        Ok(var.value_type.clone())
-    }
-    fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
-        writeln!(f, "{}Var({})", indent_fn(indent), self.variable_name)
-    }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
-        
     }
 }
 
@@ -299,8 +287,8 @@ impl Compilable for StringNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}String({})", indent_fn(indent), self.value)
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
-        
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
+
     }
 
 }
@@ -308,18 +296,15 @@ impl Compilable for StringNode {
 impl Compilable for VariableDefineNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         if self.is_const && self.value.is_none() {
-            return Err(ConstantWithoutValue {
-                name: self.var_name.clone(),
-            });
+            return Err(ConstantWithoutValue { name: self.var_name.clone() });
         }
-        /*
-        Type
-        */
+
         let inferred_type = if let Some(value) = &self.value {
             Some(value.compile(compiler)?)
         } else {
             None
         };
+
         let declared_type = if let Some(t) = &self.value_type {
             Some(CompileContext::get_type(t)?)
         } else {
@@ -328,53 +313,39 @@ impl Compilable for VariableDefineNode {
 
         let final_type = match (declared_type, inferred_type) {
             (Some(d), Some(i)) if d == i => d,
-            (Some(d), Some(i)) => {
-                return Err(TypeMismatch {
-                    expected: d,
-                    found: i,
-                });
-            }
+            (Some(d), Some(i)) => return Err(TypeMismatch { expected: d, found: i }),
             (Some(d), None) => {
+
                 match d {
                     StringValue => compiler.out.push(PushString("".to_string())),
                     Int => compiler.out.push(PushNumber(0f32)),
                     Float => compiler.out.push(PushNumber(0f32)),
                     Bool => compiler.out.push(PushBool(false)),
-                    Array(t) => {
-                        todo!()
-                    }
-                    Void => {
-                        unreachable!()
-                    }
+                    Array(_) => todo!(),
+                    Void => unreachable!(),
                 }
                 d
             }
             (None, Some(i)) => i,
-            (None, None) => {
-                return Err(CannotInferType {
-                    name: self.var_name.clone(),
-                });
-            }
+            (None, None) => return Err(CannotInferType { name: self.var_name.clone() }),
         };
+
 
         compiler.context.add_variable(
             self.var_name.clone(),
             ComptimeVariable {
                 value_type: final_type,
                 is_const: self.is_const,
-                tag: format!("{}_{}", self.var_name.clone(), compiler.current_fn.clone()),
+                tag: format!("{}_{}", self.var_name, compiler.current_fn),
             },
         )?;
-        let tag = compiler
-            .context
-            .get_variable(&self.var_name)
-            .unwrap()
-            .tag
-            .clone();
-        compiler.out.push(Instructions::SaveVar(tag));
+
+        let tag = &compiler.context.get_variable(&self.var_name).unwrap().tag;
+        compiler.out.push(Instructions::SaveVar(tag.clone()));
 
         Ok(Void)
     }
+
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         write!(f, "{}var:{:?}=", indent_fn(indent), self.value_type)?;
         if let Some(value) = &self.value {
@@ -384,14 +355,83 @@ impl Compilable for VariableDefineNode {
         }
         Ok(())
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
-       symbols.symbols.insert(self.var_name.clone(), Symbol{
-           symbol_value_type:CompileContext::get_type(self.value_type.clone().unwrap_or_else(||"void".to_string()).as_ref()).unwrap(),
-           symbol_type:SymbolType::Variable
-       }); 
+
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
+        unsafe {
+            if self.is_public {
+                self.value_type.clone().expect("Public variables cannot infer type");
+                let symbol_type = self.value_type.clone().unwrap_unchecked();
+                compiler.lookup.symbols.insert(
+                    self.var_name.clone(),
+                    Symbol {
+                        symbol_value_type: CompileContext::get_type(&symbol_type).unwrap(),
+                        symbol_type: SymbolType::Variable,
+                        is_constant: self.is_const,
+                        tag: format!("{}_{}", self.var_name, compiler.current_fn),
+                    },
+                );
+            }
+        }
     }
 }
 
+impl Compilable for VariableAccessNode {
+    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+
+        let (value_type, tag) = if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
+            (symbol.symbol_value_type.clone(), symbol.tag.clone())
+        } else if let Some(var) = compiler.context.get_variable(&self.variable_name) {
+            (var.value_type.clone(), var.tag.clone())
+        } else {
+            return Err(CompileError::UndefinedVariable { name: self.variable_name.clone() });
+        };
+
+        compiler.out.push(Instructions::LoadVar(tag));
+
+        Ok(value_type)
+    }
+
+    fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
+        writeln!(f, "{}Var({})", indent_fn(indent), self.variable_name)
+    }
+
+    fn add_to_lookup(&self, _compiler: &mut Compiler) {}
+}
+
+impl Compilable for VariableAssignNode {
+    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        // Lookup-first: symbols -> context
+        let (is_const, expected_type, tag) = if let Some(symbol) = compiler.lookup.symbols.get(&self.name) {
+            (symbol.is_constant, symbol.symbol_value_type.clone(), symbol.tag.clone())
+        } else if let Some(var) = compiler.context.get_variable(&self.name) {
+            (var.is_const, var.value_type.clone(), var.tag.clone())
+        } else {
+            return Err(CompileError::UndefinedVariable { name: self.name.clone() });
+        };
+
+        if is_const {
+            return Err(CompileError::ConstReassignment { name: self.name.clone() });
+        }
+
+        let value_type = self.value.compile(compiler)?;
+
+        if value_type != expected_type {
+            return Err(TypeMismatch { expected: expected_type, found: value_type });
+        }
+
+        compiler.out.push(Instructions::SaveVar(tag));
+
+        Ok(value_type)
+    }
+
+    fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
+        writeln!(f, "{}{}=", indent_fn(indent), self.name)?;
+        self.value.fmt(f)?;
+        Ok(())
+    }
+
+    fn add_to_lookup(&self, _compiler: &mut Compiler) {}
+}
 impl Compilable for BoolNode {
     fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         compiler
@@ -402,57 +442,8 @@ impl Compilable for BoolNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         writeln!(f, "{}String({:?})", indent_fn(indent), self.value)
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
-        
-    }
-}
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
 
-impl Compilable for VariableAssignNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        let (is_const, expected_type) = {
-            let var = compiler.context.get_variable(&self.name).ok_or(
-                CompileError::UndefinedVariable {
-                    name: self.name.clone(),
-                },
-            )?;
-            (var.is_const, var.value_type.clone())
-        };
-        if is_const {
-            return Err(CompileError::ConstReassignment {
-                name: self.name.clone(),
-            });
-        }
-
-        let value_type = self.value.compile(compiler)?;
-
-        if value_type != expected_type {
-            return Err(TypeMismatch {
-                expected: expected_type,
-                found: value_type,
-            });
-        }
-        // SAFETY: At this moment we surely know that the variable will exist, and we don't need to
-        // do normal 'unwrap' because this is little bit faster
-        unsafe {
-            let tag = compiler
-                .context
-                .get_variable(&self.name)
-                .unwrap_unchecked()
-                .tag
-                .clone();
-
-            compiler.out.push(Instructions::SaveVar(tag));
-        }
-
-        Ok(value_type)
-    }
-    fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
-        writeln!(f, "{}{}=", indent_fn(indent), self.name)?;
-        self.value.fmt(f)?;
-        Ok(())
-    }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
-        
     }
 }
 /*
@@ -470,7 +461,7 @@ impl Compilable for ArrayNode {
         }
         writeln!(f, "{}]", " ".repeat(indent))
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         
     }
 }
@@ -536,7 +527,7 @@ impl Compilable for FunctionCallNode {
     fn fmt_with_indent(&self, _f: &mut Formatter<'_>, _indent: usize) -> fmt::Result {
         writeln!(_f, "{}{}(...)", indent_fn(_indent), self.name)
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
        
         
     }
@@ -552,7 +543,7 @@ impl Compilable for ImportNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         unimplemented!()
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         /*
          * Lexer
          */
@@ -577,7 +568,7 @@ impl Compilable for ImportNode {
             println!("\x1b[1;31m{}\x1b[0m", e);
             process::exit(-2)
         });
-        parsed_ast.add_to_lookup(symbols);
+        parsed_ast.add_to_lookup(compiler);
         
     }
 }

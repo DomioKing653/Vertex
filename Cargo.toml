@@ -1,6 +1,6 @@
 [package]
 name = "flare"
-version = "0.0.26-alpha"
+version = "0.0.27-alpha"
 edition = "2024"
 
 [dependencies]

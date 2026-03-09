@@ -38,6 +38,7 @@ pub enum TokenKind {
     UNDEF,
     AS,
     USE,
+    EXP,
     //EOF
     EOF,
     VALUE,

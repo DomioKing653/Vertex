@@ -6,6 +6,7 @@ use crate::backend::{
     },
     errors::compiler::compiler_errors::CompileError,
 };
+use crate::backend::compiler::byte_code::Compiler;
 use crate::backend::linker::link::GlobalSymbols;
 
 #[derive(Clone)]
@@ -48,7 +49,7 @@ impl Compilable for WhileStatement {
     ) -> std::fmt::Result {
         writeln!(_f, "if")
     }
-    fn add_to_lookup(&self, symbols: &mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         
     }
 }

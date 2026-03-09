@@ -142,6 +142,7 @@ pub struct VariableDefineNode {
     pub value_type: Option<String>,
     pub value: Option<Box<dyn Compilable>>,
     pub is_const: bool,
+    pub is_public: bool,
 }
 impl Debug for VariableDefineNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

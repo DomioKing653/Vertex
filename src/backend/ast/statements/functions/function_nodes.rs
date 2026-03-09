@@ -40,11 +40,13 @@ impl Compilable for FunctionDefineNode {
 
         Ok(())
     }
-    fn add_to_lookup(&self, symbols:&mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         unsafe {
-            symbols.symbols.insert(self.id.clone(), Symbol {
+            compiler.lookup.symbols.insert(self.id.clone(), Symbol {
                 symbol_value_type: CompileContext::get_type(&self.return_type.clone().unwrap_unchecked()).unwrap(),
-                symbol_type:Function
+                symbol_type:Function,
+                is_constant:false,
+                tag:self.id.to_string(),
 
             })
         };

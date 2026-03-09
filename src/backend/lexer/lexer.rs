@@ -226,6 +226,10 @@ impl Lexer {
                 token_kind: TokenKind::USE,
                 token_value: text_buffer,
             },
+            "exp"=> Token {
+                token_kind:TokenKind::EXP,
+                token_value: text_buffer,
+            },
 
             _ => Token {
                 token_kind: IDENTIFIER,

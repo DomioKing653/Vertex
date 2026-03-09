@@ -55,14 +55,12 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
     /*
      * Lookup table
     */
-    let mut lookup = GlobalSymbols{
-        symbols:HashMap::new(),
-    };
-    parsed_ast.add_to_lookup(&mut lookup);
+    let mut compiler = Compiler::new();
+    parsed_ast.add_to_lookup(&mut compiler);
     /*
      *Bytecode
      */
-    let mut compiler = Compiler::new();
+
     if let Err(e) = parsed_ast.compile(&mut compiler) {
         println!("Error at {}:", &dir);
         println!("\x1b[1;31m{}\x1b[0m", e);

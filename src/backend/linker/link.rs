@@ -1,7 +1,13 @@
 use std::collections::HashMap;
-
-use crate::backend::compiler::{ comptime_variable_checker::comptime_value_for_check::ComptimeValueType};
-
+use crate::{
+    backend::{
+        compiler::{
+            instructions::Instructions,
+            comptime_variable_checker::comptime_value_for_check::ComptimeValueType
+        },
+        linker::obj_file::ObjFile
+    }
+};
 pub enum SymbolType {
     Function,
     Variable
@@ -13,11 +19,12 @@ pub struct GlobalSymbols{
 
 pub struct Symbol{
     pub symbol_value_type:ComptimeValueType,
-    pub symbol_type:SymbolType
+    pub symbol_type:SymbolType,
+    pub is_constant:bool,
+    pub tag:String
 }
 
-use crate::backend::compiler::instructions::Instructions;
-use crate::backend::linker::obj_file::ObjFile;
+
 
 pub struct Linker;
 

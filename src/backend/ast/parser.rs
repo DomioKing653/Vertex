@@ -46,6 +46,7 @@ impl Parser {
         self.token_idx += 1;
     }
 
+
     pub fn parse(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         let mut program: ProgramNode = ProgramNode::new();
 
@@ -78,8 +79,69 @@ impl Parser {
     // just on top of the program for now
     fn parse_stmt(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         match &self.current_token().token_kind {
+            TokenKind::EXP =>{
+                self.advance();
+                if self.current_token().token_kind == CONST || self.current_token().token_kind == VAR {
+                    let value = self.parse_var_decl_stmt(true);
+                    self.expect(SEMICOLON)?;
+                    value
+                }
+                else if self.current_token().token_kind == FNC{
+                    let mut args = Vec::new();
+                    self.advance(); //FN
+                    let id = self.expect(IDENTIFIER)?;
+                    self.expect(LEFTPAREN)?;
+                    if self.current_token().token_kind != RIGHTPAREN {
+                        loop {
+                            let arg_name = self.expect(IDENTIFIER)?;
+                            self.expect(COLON)?;
+                            let arg_type = self.expect(IDENTIFIER)?;
+
+                            args.push(FunctionArgs {
+                                name: arg_name.token_value,
+                                argument_type: arg_type.token_value,
+                            });
+
+                            if self.current_token().token_kind == COMMA {
+                                self.advance();
+                                continue;
+                            }
+
+                            break;
+                        }
+                    }
+                    self.expect(RIGHTPAREN)?;
+                    let return_type = if self.current_token().token_kind == COLON {
+                        self.advance();
+                        Some(self.expect(IDENTIFIER)?.token_value)
+                    } else {
+                        None
+                    };
+                    self.expect(OPENINGBRACE)?;
+
+                    let mut body: Vec<Box<dyn Compilable>> = Vec::new();
+                    while self.current_token().token_kind != CLOSINGBRACE {
+                        body.push(self.parse_stmt()?);
+                    }
+                    self.expect(CLOSINGBRACE)?;
+                    println!("{:?}", &return_type);
+
+                    Ok(Box::new(FunctionDefineNode {
+                        id: id.token_value,
+                        return_type,
+                        body,
+                        args,
+                    }))
+
+                }else {
+                    Err(UnexpectedToken {
+                        expected:VAR,
+                        found:self.current_token().token_value.clone()
+                    })
+                }
+            }
             VAR | CONST => {
-                let value = self.parse_var_decl_stmt();
+                let value = self.parse_var_decl_stmt(false);
                 self.expect(SEMICOLON)?;
                 value
             }
@@ -208,7 +270,7 @@ impl Parser {
         }
     }
 
-    fn parse_var_decl_stmt(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
+    fn parse_var_decl_stmt(&mut self,is_pub:bool) -> Result<Box<dyn Compilable>, ParserError> {
         let is_const: bool;
         if self.current_token().token_kind == CONST {
             is_const = true;
@@ -237,6 +299,7 @@ impl Parser {
             value,
             var_name: id,
             is_const,
+            is_public:is_pub,
         }))
     }
 

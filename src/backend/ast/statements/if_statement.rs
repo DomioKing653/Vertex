@@ -56,7 +56,7 @@ impl Compilable for IfStatement {
         }
         Ok(())
     }
-    fn add_to_lookup(&self, symbols: &mut GlobalSymbols) {
+    fn add_to_lookup(&self, compiler: &mut Compiler) {
         
     }
 }

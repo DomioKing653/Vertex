@@ -141,7 +141,7 @@ impl VM {
                     let val = self.pop()?;
                     match val {
                         StringValue(s) => println!("{}", s),
-                        Number(n) => println!("{}", n),
+                        Number(n) => println!("{}", n.to_string()),
                         _ => unreachable!(),
                     }
                     self.ip += 1;
