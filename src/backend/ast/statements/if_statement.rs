@@ -12,7 +12,7 @@ pub struct IfStatement {
 }
 
 impl Compilable for IfStatement {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         let cond_type = self.condition.compile(compiler)?;
         if cond_type != ComptimeValueType::Bool {
             return Err(CompileError::TypeMismatch {
@@ -24,7 +24,7 @@ impl Compilable for IfStatement {
         let jump_if_false_pos = compiler.out.len();
         compiler.out.push(Instructions::JumpIfFalse(0)); // Placeholder for jump instruction
         compiler.context.enter_scope();
-        for stmt in &self.then_branch {
+        for stmt in &mut self.then_branch {
             stmt.compile(compiler)?;
         }
         compiler.context.exit_scope();
@@ -34,7 +34,7 @@ impl Compilable for IfStatement {
         let else_start = compiler.out.len();
         compiler.out[jump_if_false_pos] = Instructions::JumpIfFalse(else_start); // If false, jump to else_start
         compiler.context.enter_scope();
-        if let Some(else_branch) = &self.else_branch {
+        if let Some(else_branch) = &mut self.else_branch {
             for stmt in else_branch {
                 stmt.compile(compiler)?;
             }

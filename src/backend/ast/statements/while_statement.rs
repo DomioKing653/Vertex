@@ -16,7 +16,7 @@ pub struct WhileStatement {
 
 impl Compilable for WhileStatement {
     fn compile(
-        &self,
+        &mut self,
         compiler: &mut byte_code::Compiler,
     ) -> Result<ComptimeValueType, CompileError> {
         let cond_type = self.condition.compile(compiler)?;
@@ -30,8 +30,8 @@ impl Compilable for WhileStatement {
         compiler.out.push(Instructions::JumpIfFalse(0));
         let statements_start = compiler.out.len();
         compiler.context.enter_scope();
-        for statemnt in &self.body {
-            statemnt.compile(compiler)?;
+        for statement in &mut self.body {
+            statement.compile(compiler)?;
         }
         compiler.context.exit_scope();
         self.condition.compile(compiler)?;

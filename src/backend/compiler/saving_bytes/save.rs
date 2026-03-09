@@ -14,6 +14,8 @@ use std::{
     time::Instant,
 };
 use walkdir::WalkDir;
+use crate::backend::ast::nodes::ProgramNode;
+use crate::backend::lexer::tokens::TokenKind::SEMICOLON;
 
 fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec<Instructions>) {
     for token in tokens {
@@ -41,11 +43,12 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
         }
         Ok(tokens) => tokens,
     };
+
     /*
      * Parser
      */
     let mut main_parser: Parser = Parser::new(tokens.to_vec());
-    let parsed_ast = main_parser.parse().unwrap_or_else(|e| {
+    let mut parsed_ast = main_parser.parse().unwrap_or_else(|e| {
         println!("Error at {}:", &dir);
         println!("\x1b[1;31m{}\x1b[0m", e);
         process::exit(-2)

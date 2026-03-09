@@ -64,9 +64,11 @@ impl Parser {
             USE => {
                 self.advance();
                 let name_to_use = self.expect(STRING)?.token_value;
+                self.expect(SEMICOLON)?;
                 return Ok(Box::new(ImportNode {
                     module: name_to_use,
                 }));
+
             }
             _ => {
                 self.on_top_statement = false;
@@ -82,9 +84,9 @@ impl Parser {
             TokenKind::EXP =>{
                 self.advance();
                 if self.current_token().token_kind == CONST || self.current_token().token_kind == VAR {
-                    let value = self.parse_var_decl_stmt(true);
+                    let value = self.parse_var_decl_stmt(true)?;
                     self.expect(SEMICOLON)?;
-                    value
+                    Ok(value)
                 }
                 else if self.current_token().token_kind == FNC{
                     let mut args = Vec::new();
@@ -407,6 +409,7 @@ impl Parser {
                     args,
                     name,
                     call_type: if is_macro { Macro } else { Fn },
+                    return_type:None
                 }))
             } else {
                 Ok(Box::new(VariableAccessNode {

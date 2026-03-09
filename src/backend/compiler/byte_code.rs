@@ -47,7 +47,7 @@ where
     }
 }
 pub trait Compilable: Debug + CompilableClone {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError>;
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError>;
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result;
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError>;
     /*
@@ -101,7 +101,7 @@ impl Compiler {
     }
 }
 impl Compilable for NumberNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         compiler.out.push(PushNumber(self.number as f32));
         Ok(Int)
     }
@@ -124,7 +124,7 @@ impl Compilable for NumberNode {
 }
 
 impl Compilable for FloatNode {
-    fn compile(&self, out: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, out: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         out.out.push(PushNumber(self.number));
         Ok(Float)
     }
@@ -145,7 +145,7 @@ impl Compilable for FloatNode {
 }
 
 impl Compilable for PrefixExpressionNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         todo!()
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
@@ -171,7 +171,7 @@ impl Debug for PrefixExpressionNode {
 }
 
 impl Compilable for BinaryOpNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         let right = self.left.compile(compiler)?;
         let left = self.right.compile(compiler)?;
         match self.op_tok {
@@ -297,8 +297,8 @@ impl Compilable for BinaryOpNode {
 }
 
 impl Compilable for ProgramNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        for program_node in &self.program_nodes {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+        for program_node in &mut self.program_nodes {
             program_node.compile(compiler)?;
         }
         compiler.out.push(Halt);
@@ -332,7 +332,7 @@ impl Compilable for ProgramNode {
 }
 
 impl Compilable for StringNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         compiler.out.push(PushString(self.value.clone()));
         Ok(StringValue)
     }
@@ -354,12 +354,12 @@ impl Compilable for StringNode {
 }
 
 impl Compilable for VariableDefineNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         if self.is_const && self.value.is_none() {
             return Err(ConstantWithoutValue { name: self.var_name.clone() });
         }
 
-        let inferred_type = if let Some(value) = &self.value {
+        let inferred_type = if let Some(value) = &mut self.value {
             Some(value.compile(compiler)?)
         } else {
             None
@@ -419,30 +419,27 @@ impl Compilable for VariableDefineNode {
     }
 
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
-        unsafe {
-            if !&self.value_type.is_none() {
-                let my_type = CompileContext::get_type(&self.value_type.clone().unwrap_unchecked())?;
-                compiler.lookup.symbols.insert(
-                    self.var_name.clone(),
-                    Symbol{
-                        symbol_value_type:Some(my_type),
-                        symbol_type:Variable,
-                        is_constant:self.is_const,
-                        tag: format!("{}_{}", self.var_name.clone(), compiler.current_fn),
-                    }
-                );
-            }
-            else {
-                compiler.lookup.symbols.insert(
-                    self.var_name.clone(),
-                    Symbol{
-                        symbol_value_type:None,
-                        symbol_type:Variable,
-                        is_constant:self.is_const,
-                        tag: format!("{}_{}", self.var_name.clone(), compiler.current_fn),
-                    }
-                );
-            }
+        if let Some(ref value_type) = self.value_type {
+            let my_type = CompileContext::get_type(value_type)?;
+            compiler.lookup.symbols.insert(
+                self.var_name.clone(),
+                Symbol {
+                    symbol_value_type: Some(my_type),
+                    symbol_type: Variable,
+                    is_constant: self.is_const,
+                    tag: format!("{}_{}", self.var_name, compiler.current_fn),
+                },
+            );
+        } else {
+            compiler.lookup.symbols.insert(
+                self.var_name.clone(),
+                Symbol {
+                    symbol_value_type: None,
+                    symbol_type: Variable,
+                    is_constant: self.is_const,
+                    tag: format!("{}_{}", self.var_name, compiler.current_fn),
+                },
+            );
         }
         Ok(())
 
@@ -472,7 +469,7 @@ impl Compilable for VariableDefineNode {
 }
 
 impl Compilable for VariableAccessNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         //NOTE:We are first looking to module context because we enable priority for private
         //variables and constants and its simpler and maybe faster
         let (value_type, tag) = if let Some(var) = compiler.context.get_variable(&self.variable_name) {
@@ -514,7 +511,7 @@ impl Compilable for VariableAccessNode {
 }
 
 impl Compilable for VariableAssignNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
        
         //NOTE:We are first looking to module context because we enable priority for private
         //variables and constants and its simpler and maybe faster
@@ -560,7 +557,7 @@ impl Compilable for VariableAssignNode {
     }
 }
 impl Compilable for BoolNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         compiler
             .out
             .push(PushBool(if self.value == TRUE { true } else { false }));
@@ -586,7 +583,7 @@ impl Compilable for BoolNode {
  * Array node
  */
 impl Compilable for ArrayNode {
-    fn compile(&self, _compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, _compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         todo!()
     }
 
@@ -610,7 +607,7 @@ impl Compilable for ArrayNode {
     }
 }
 impl Compilable for FunctionCallNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         match self.call_type {
             CallType::Macro => {
                 // HACK: temporarily remove the macro from the map so we can call `compile`.
@@ -621,13 +618,14 @@ impl Compilable for FunctionCallNode {
                         name: self.name.clone(),
                     },
                 )?;
-                let result = mac.compile(compiler, &self.args);
+                let result = mac.compile(compiler, &mut self.args)?;
                 compiler.macros.macros.insert(self.name.clone(), mac);
-                result
+                self.return_type = Some(result.clone());
+                Ok(result)
             }
             CallType::Fn => {
                 let old_fn = compiler.current_fn.clone();
-                let called_function: CompileTimeFunctionForCheck =
+                let mut called_function: CompileTimeFunctionForCheck =
                     compiler.context.get_fn(&self.name)?;
                 compiler.current_fn = self.name.clone();
                 if self.args.len() != called_function.args.len() {
@@ -638,8 +636,8 @@ impl Compilable for FunctionCallNode {
                     });
                 }
                 compiler.context.enter_scope();
-                for (called_arg, fnc_arg) in self.args.iter().zip(called_function.args.iter()) {
-                    let called_args_type = called_arg.compile(compiler)?;
+                for (called_arg, fnc_arg) in self.args.iter_mut().zip(called_function.args.iter()) {
+                    let called_args_type = called_arg.as_mut().compile(compiler)?;
 
                     compiler.context.add_variable(
                         fnc_arg.name.clone(),
@@ -659,7 +657,7 @@ impl Compilable for FunctionCallNode {
                         });
                     }
                 }
-                for statement in called_function.body {
+                for statement in &mut called_function.body {
                     statement.compile(compiler)?;
                 }
                 compiler.context.exit_scope();
@@ -675,23 +673,23 @@ impl Compilable for FunctionCallNode {
         Ok(())
     }
 
-    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+    fn add_to_type_check(&self, _compiler: &mut Compiler) -> Result<(), CompileError> {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self,_compiler: &mut Compiler) -> ComptimeValueType {
        todo!() 
     }
 }
 
 //FIXME:Add check for cyclic importing until imports are not macro.
 impl Compilable for ImportNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, _compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         
 
         Ok(Void)
     }
-    fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
+    fn fmt_with_indent(&self, _f: &mut Formatter<'_>, _indent: usize) -> fmt::Result {
         unimplemented!()
     }
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
@@ -725,11 +723,11 @@ impl Compilable for ImportNode {
         
     }
 
-    fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
+    fn add_to_type_check(&self, _compiler: &mut Compiler) -> Result<(), CompileError> {
         Ok(())
     }
 
-    fn my_type(&self,compiler: &mut Compiler) -> ComptimeValueType {
+    fn my_type(&self,_compiler: &mut Compiler) -> ComptimeValueType {
        Void
     }
 }

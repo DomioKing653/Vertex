@@ -2,6 +2,7 @@ use crate::backend::compiler::byte_code::Compilable;
 use crate::backend::lexer::tokens::TokenKind;
 use std::fmt;
 use std::fmt::{Debug, Formatter};
+use crate::backend::compiler::comptime_variable_checker::comptime_value_for_check::ComptimeValueType;
 
 #[derive(Clone)]
 pub enum CallType {
@@ -174,6 +175,7 @@ pub struct FunctionCallNode {
     pub args: Vec<Box<dyn Compilable>>,
     pub name: String,
     pub call_type: CallType,
+    pub return_type: Option<ComptimeValueType>,
 }
 
 impl Debug for FunctionCallNode {

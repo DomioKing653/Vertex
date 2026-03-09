@@ -16,7 +16,7 @@ pub struct StructDefineNode{
 }
 
 impl Compilable for StructDefineNode{
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType,CompileError>{
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType,CompileError>{
         todo!()
     }
     fn fmt_with_indent(&self, f: &mut std::fmt::Formatter<'_>, indent: usize) -> std::fmt::Result {

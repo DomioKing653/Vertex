@@ -19,7 +19,7 @@ pub struct FunctionDefineNode {
 }
 
 impl Compilable for FunctionDefineNode {
-    fn compile(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
+    fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         println!("{:?}",&self.return_type);
         let return_type = CompileContext::get_type(&self.return_type.clone().unwrap())?;
         let args = self.args.clone(); 
