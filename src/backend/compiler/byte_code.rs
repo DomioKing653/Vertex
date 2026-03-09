@@ -301,7 +301,6 @@ impl Compilable for ProgramNode {
         for program_node in &mut self.program_nodes {
             program_node.compile(compiler)?;
         }
-        compiler.out.push(Halt);
         Ok(Void)
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {

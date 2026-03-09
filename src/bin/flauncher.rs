@@ -34,6 +34,7 @@ fn main() {
                 }
             }
             "build" => {
+                let debug = parse_flags(args);
                 
                 let tex = fs::read_to_string("prj.toml").unwrap();
                 let config: Config = match toml::from_str(&tex) {
@@ -48,11 +49,20 @@ fn main() {
                     print!("cannot find main.flare in ./src");
                     process::exit(-1);
                 });
-                build_directory("src/".to_string(), config.name, false);
+                build_directory("src/".to_string(), config.name, debug);
             }
             _ => {}
         }
     } else {
-        println!("[1;32m Expected argument [  ");
+        println!("Expected argument");
     }
+}
+
+fn parse_flags(args:Vec<String>) -> bool {
+    for arg in args {
+        if arg == "-d" {
+            return true
+        }
+    }
+    false
 }

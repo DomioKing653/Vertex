@@ -14,8 +14,7 @@ use std::{
     time::Instant,
 };
 use walkdir::WalkDir;
-use crate::backend::ast::nodes::ProgramNode;
-use crate::backend::lexer::tokens::TokenKind::SEMICOLON;
+
 
 fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec<Instructions>) {
     for token in tokens {
@@ -79,7 +78,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
 
 //NOTE:This is just entry point for the compilation process, and it
 // shouldn't be used any further in the compilation process
-pub fn build_directory(dir: String, out: String, _debug: bool) {
+pub fn build_directory(dir: String, out: String, debug: bool) {
     ensure_target_dir();
 
     // Start timing
@@ -105,6 +104,9 @@ pub fn build_directory(dir: String, out: String, _debug: bool) {
     }
     //LINKING
     let mut final_file = Linker::link(objs);
+    for instr in &final_file{
+        println!("{:?}",instr)
+    }
 
 
     //TODO:This will be used to write the whole .out after the linking

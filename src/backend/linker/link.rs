@@ -8,6 +8,8 @@ use crate::{
         linker::obj_file::ObjFile
     }
 };
+use crate::backend::compiler::instructions::Instructions::Halt;
+
 pub enum SymbolType {
     Function,
     Variable
@@ -65,6 +67,7 @@ impl Linker {
             program.extend(patched);
         }
 
+        program.push(Halt);
         program
     }
 }
