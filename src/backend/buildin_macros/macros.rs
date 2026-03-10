@@ -17,6 +17,7 @@ pub trait Macro {
         out: &mut Compiler,
         args: &mut [Box<dyn Compilable>],
     ) -> Result<ComptimeValueType, CompileError>;
+    fn my_type(&self) -> Result<ComptimeValueType, CompileError>;
 }
 
 pub struct WriteLnMacro;
@@ -27,7 +28,7 @@ impl Macro for WriteLnMacro {
         compiler: &mut Compiler,
         args: &mut [Box<dyn Compilable>],
     ) -> Result<ComptimeValueType, CompileError> {
-        for arg in  args {
+        for arg in args {
             let value = arg.compile(compiler)?;
             match value {
                 StringValue | Int | Float => compiler.out.push(WriteLnLastOnStack),
@@ -42,6 +43,9 @@ impl Macro for WriteLnMacro {
                 }
             }
         }
+        Ok(Void)
+    }
+    fn my_type(&self) -> Result<ComptimeValueType, CompileError> {
         Ok(Void)
     }
 }
@@ -69,6 +73,9 @@ impl Macro for WriteMacro {
                 }
             }
         }
+        Ok(Void)
+    }
+    fn my_type(&self) -> Result<ComptimeValueType, CompileError> {
         Ok(Void)
     }
 }
@@ -100,6 +107,9 @@ impl Macro for ProcessExitMacro {
             }
         }
     }
+    fn my_type(&self) -> Result<ComptimeValueType, CompileError> {
+        Ok(Void)
+    }
 }
 
 pub struct ReadInputMacro;
@@ -108,7 +118,7 @@ impl Macro for ReadInputMacro {
     fn compile(
         &self,
         out: &mut Compiler,
-        args:&mut [Box<dyn Compilable>],
+        args: &mut [Box<dyn Compilable>],
     ) -> Result<ComptimeValueType, CompileError> {
         if args.len() != 1 {
             return Err(CompileError::WrongMacroArgCount {
@@ -129,5 +139,8 @@ impl Macro for ReadInputMacro {
                 }),
             }
         }
+    }
+    fn my_type(&self) -> Result<ComptimeValueType, CompileError> {
+        Ok(Void)
     }
 }
