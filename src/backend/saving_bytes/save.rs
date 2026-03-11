@@ -71,7 +71,6 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
      */
     let mut compiler = Compiler::new();
     parsed_ast.add_to_lookup(&mut compiler).unwrap();
-
     /*
      * Type check
      */
@@ -98,7 +97,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
     ObjFile {
         instructions: compiler.out,
         name: dir.clone(),
-        imports: vec![],
+        imports: compiler.imports,
     }
 }
 
@@ -120,9 +119,7 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
     );
 
     /*
-     * =====================
-     * COMPILE PHASE
-     * =====================
+     * Compile phase
      */
     println!("\x1b[1mCompiling\x1b[0m");
 
@@ -139,9 +136,7 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
     );
 
     /*
-     * =====================
-     * LINKING
-     * =====================
+     * Linking
      */
     println!("\x1b[1mLinking\x1b[0m");
 
@@ -163,7 +158,7 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
     );
 
     /*
-     * WRITE OUTPUT
+     * Write output
      */
     println!("\x1b[1mWriting output\x1b[0m");
 

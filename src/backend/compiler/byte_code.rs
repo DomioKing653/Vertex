@@ -79,6 +79,7 @@ pub struct Compiler {
     pub last_return_address: Option<usize>,
     pub lookup: GlobalSymbols,
     pub variables_type: HashMap<String, ComptimeValueType>,
+    pub imports:Vec<String>,
 }
 
 impl Default for Compiler {
@@ -98,6 +99,7 @@ impl Compiler {
                 symbols: HashMap::new(),
             },
             variables_type: HashMap::new(),
+            imports: vec![],
         }
     }
     pub fn optimize(&mut self) {
@@ -872,6 +874,7 @@ impl Compilable for ImportNode {
         */
         parsed_ast.add_to_lookup(compiler)?;
         parsed_ast.add_to_type_check(compiler)?;
+        compiler.imports.push(self.module.clone());
         Ok(())
     }
 
