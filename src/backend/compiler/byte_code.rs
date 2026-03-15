@@ -79,6 +79,7 @@ pub struct Compiler {
     pub current_fn: String,
     pub last_return_address: Option<usize>,
     pub lookup: GlobalSymbols,
+    pub function_types:HashMap<String,ComptimeValueType>,
     pub variables_type: HashMap<String, ComptimeValueType>,
     pub imports:Vec<String>,
 }
@@ -100,6 +101,7 @@ impl Compiler {
                 symbols: HashMap::new(),
             },
             variables_type: HashMap::new(),
+            function_types: HashMap::new(),
             imports: vec![],
         }
     }
@@ -837,7 +839,7 @@ impl Compilable for FunctionCallNode {
             Ok(result)
         }
         else {
-            Ok(compiler.context.get_fn(self.name.as_str())?.return_type.clone())
+            Ok(compiler.function_types.get(&self.name).unwrap().clone())
 
         }
     }

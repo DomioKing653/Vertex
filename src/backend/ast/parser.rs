@@ -253,7 +253,7 @@ impl Parser {
                 while self.current_token().token_kind != CLOSINGBRACE {
                     body.push(self.parse_stmt()?);
                 }
-                self.expect(CLOSINGBRACE)?;;
+                self.expect(CLOSINGBRACE)?;
 
                 Ok(Box::new(FunctionDefineNode {
                     id: id.token_value,
