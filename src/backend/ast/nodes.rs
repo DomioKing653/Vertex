@@ -14,7 +14,6 @@ pub enum CallType {
 pub struct ProgramNode {
     pub program_nodes: Vec<Box<dyn Compilable>>,
 }
-
 impl ProgramNode {
     pub fn new() -> Self {
         Self {

@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::backend::{
     compiler::{
-        byte_code::{Compilable, Compiler}, comptime_variable_checker::{comptime_context::CompileContext, comptime_value_for_check::ComptimeValueType}, functions_compiler_context::CompileTimeFunctionForCheck
+        byte_code::{Compilable, Compiler}, comptime_variable_checker::{comptime_value_for_check::ComptimeValueType}, functions_compiler_context::CompileTimeFunctionForCheck
     },
     errors::compiler::compiler_errors::CompileError,
 };
@@ -20,7 +20,7 @@ pub struct FunctionDefineNode {
 
 impl Compilable for FunctionDefineNode {
     fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        let return_type = CompileContext::get_type(&self.return_type.clone().unwrap())?;
+        let return_type = compiler.context.get_type(&self.return_type.clone().unwrap())?;
         let args = self.args.clone(); 
         compiler.context.add_function(
             self.id.clone(),
@@ -41,7 +41,7 @@ impl Compilable for FunctionDefineNode {
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         unsafe {
             compiler.lookup.symbols.insert(self.id.clone(), Symbol {
-                symbol_value_type: Some(CompileContext::get_type(&self.return_type.clone().unwrap_unchecked())?),
+                symbol_value_type: Some(compiler.context.get_type(&self.return_type.clone().unwrap_unchecked())?),
                 symbol_type:Function,
                 is_constant:false,
                 tag:self.id.to_string(),
@@ -54,7 +54,7 @@ impl Compilable for FunctionDefineNode {
 
     fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError>
     {
-        compiler.function_types.insert(self.id.clone(),CompileContext::get_type(&self.return_type.clone().unwrap())?);
+        compiler.function_types.insert(self.id.clone(),compiler.context.get_type(&self.return_type.clone().unwrap())?);
         Ok(())
     }
 

@@ -12,6 +12,7 @@ pub struct CompileContext {
     pub functions: Vec<HashMap<String, CompileTimeFunctionForCheck>>,
     pub scopes: Vec<HashMap<String, ComptimeVariable>>,
     current_variable_tag: String,
+    pub types:Vec<String>
 }
 impl CompileContext {
     pub fn new() -> Self {
@@ -20,9 +21,10 @@ impl CompileContext {
             functions: vec![HashMap::new()],
             scopes: vec![HashMap::new()],
             current_variable_tag: "default".into(),
+            types:Vec::new()
         }
     }
-    pub fn get_type(type_to_identify: &str) -> Result<ComptimeValueType, CompileError> {
+    pub fn get_type(&self,type_to_identify: &str) -> Result<ComptimeValueType, CompileError> {
         match type_to_identify {
             "int" => Ok(Int),
             "string" => Ok(StringValue),

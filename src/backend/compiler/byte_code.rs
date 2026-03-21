@@ -449,7 +449,7 @@ impl Compilable for VariableDefineNode {
         };
 
         let declared_type = if let Some(t) = &self.value_type {
-            Some(CompileContext::get_type(t)?)
+            Some(compiler.context.get_type(t)?)
         } else {
             None
         };
@@ -510,7 +510,7 @@ impl Compilable for VariableDefineNode {
 
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         if let Some(ref value_type) = self.value_type {
-            let my_type = CompileContext::get_type(value_type)?;
+            let my_type =  compiler.context.get_type(value_type)?;
             compiler.lookup.symbols.insert(
                 self.var_name.clone(),
                 Symbol {
@@ -560,7 +560,7 @@ impl Compilable for VariableDefineNode {
         };
 
         let declared_type = if let Some(t) = &self.value_type {
-            Some(CompileContext::get_type(t)?)
+            Some(compiler.context.get_type(t)?)
         } else {
             None
         };
@@ -799,7 +799,7 @@ impl Compilable for FunctionCallNode {
                     )?;
                     let tag = compiler.context.get_variable(&fnc_arg.name).unwrap();
                     compiler.out.push(Instructions::SaveVar(tag.tag.clone()));
-                    let final_fnc_type = CompileContext::get_type(&fnc_arg.argument_type)?;
+                    let final_fnc_type = compiler.context.get_type(&fnc_arg.argument_type)?;
                     if called_args_type != final_fnc_type {
                         return Err(TypeMismatch {
                             expected: final_fnc_type,
