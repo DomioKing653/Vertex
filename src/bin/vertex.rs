@@ -16,6 +16,39 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 {
         match args[1].as_str() {
+            "help"=>{
+                println!(
+                r#"vertex — project manager for the Vertex language
+
+                USAGE:
+                    vertex <COMMAND>
+
+                COMMANDS:
+
+                    build
+                        Build project into bytecode using configuration
+                        from prj.toml. Output is placed into ./out/
+
+                    new <PROJECT_NAME>
+                        Create a new Vertex project:
+
+                            <PROJECT_NAME>/
+                                src/
+                                    main.vtx
+                                prj.toml
+
+                        main.vtx contains a Hello World example.
+
+                    clear
+                        Remove all build artifacts inside ./out/
+
+                DESCRIPTION:
+                    vertex is the official project manager and build tool
+                    for the Vertex programming language.
+                "#
+                );
+
+            }
             "create" => {
                 if args.len() > 2 {
                     let project_name = args[2].clone();

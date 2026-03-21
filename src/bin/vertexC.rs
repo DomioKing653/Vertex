@@ -24,7 +24,7 @@ fn main() {
             match e {
                 CommandLineError::BuildHasJustTwoArg => "Build command has just two arguments",
                 CommandLineError::NoFileSpecifiedForBuild => "No file specified for build",
-                NoSuchCommand => "No such command",
+                NoSuchCommand => "No such command. Run 'vertexC help for more info'",
             }
             .to_string()
         );
@@ -59,7 +59,7 @@ fn run_cli() -> Result<(), CommandLineError> {
         }
         "error" => {
             if args.len() != 3 {
-                eprintln!("Usage: vertexC error <ERROR_CODE>");
+                eprintln!("Usage: vertexC error [ERROR_CODE]");
                 return Ok(());
             }
 
@@ -70,6 +70,27 @@ fn run_cli() -> Result<(), CommandLineError> {
                 None => eprintln!("Unknown error code: {}", code),
             }
 
+            Ok(())
+        }
+        "help" =>{
+    println!(
+        r#"vertexC — compiler tool for Vertex
+
+        vertexC compiles a single source file into Vertex bytecode.
+        It will remain available even after the 'vertex' project manager
+        is finished, mainly for testing and low-level workflows.
+
+        USAGE:
+            vertexC build <INPUT_FILE> <OUTPUT_FILE>
+                Compile source file into bytecode stored in ./out/
+
+            vertexC run <BYTECODE>
+                Execute bytecode using VVM (Vertex Virtual Machine)
+
+            vertexC exec <INPUT_FILE> <OUTPUT_FILE>
+                Compile and immediately run the produced bytecode
+        "#
+        );
             Ok(())
         }
         _ => Err(NoSuchCommand),
