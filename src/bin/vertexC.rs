@@ -20,7 +20,7 @@ use vertex::backend::saving_bytes::save::build_directory;
 fn main() {
     if let Err(e) = run_cli() {
         eprintln!(
-            "Fatal error:{:?}!",
+            "{}",
             match e {
                 CommandLineError::BuildHasJustTwoArg => "Build command has just two arguments",
                 CommandLineError::NoFileSpecifiedForBuild => "No file specified for build",
@@ -89,6 +89,8 @@ fn run_cli() -> Result<(), CommandLineError> {
 
             vertexC exec <INPUT_FILE> <OUTPUT_FILE>
                 Compile and immediately run the produced bytecode
+            vertexC error <ERORR_CODE>
+                Explains erorr more deeply
         "#
         );
             Ok(())

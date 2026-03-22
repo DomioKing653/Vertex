@@ -24,6 +24,13 @@ impl CompileContext {
             types:Vec::new()
         }
     }
+    pub fn add_type(&mut self,type_to_add:String)->Result<(),CompileError>{
+        if !self.types.contains(&type_to_add) {
+            self.types.push(type_to_add);
+            return Ok(());
+        }
+        return Err(CompileError::TypeAlredyExists { name_of_type: type_to_add });
+    }
     pub fn get_type(&self,type_to_identify: &str) -> Result<ComptimeValueType, CompileError> {
         match type_to_identify {
             "int" => Ok(Int),

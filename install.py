@@ -25,7 +25,7 @@ run(["cargo", "build", "--bin", "vertex", "--release"])
 
 target = path.join("target", "release")
 
-if name == "nt":
+if name == "nt": 
     vertexC = path.join(target, "vertexC.exe")
     vertex = path.join(target, "vertex.exe")
     install_dir = r"C:\Program Files\flare"

@@ -89,7 +89,9 @@ fn main() {
             "clear" => {
                 remove_dir_all("./out").unwrap();
             }
-            _ => {}
+            _ => {
+                println!("No such command. Use 'vertex help' for more info")
+            }
         }
     } else {
         println!("Expected argument");
