@@ -13,12 +13,14 @@ pub const EQUAL:u8 = 8;
 pub const JUMP:u8 =40;
 pub const JUMP_IF_FALSE:u8 = 41;
 pub const JUMP_IF_TRUE:u8 = 42;
+pub const JUMP_LAST_ON_STACK:u8 = 43;
 
 // VALS
 pub const  PUSH_STR:u8 = 20;
 pub const  PUSH_BOOL:u8 = 21;
 pub const PUSH_NUMB:u8 = 22;
-pub const DROP:u8 = 23;
+pub const PUSH_USIZE:u8=23;
+pub const DROP:u8 = 125;
 // IO
 pub const WRITE_LN:u8 = 30;
 pub const WRITE:u8 = 31;
@@ -52,6 +54,7 @@ pub enum Instructions {
     PushString(String),
     PushBool(bool),
     PushNumber(f32),
+    PushUsize(usize),
     ReadInput,
     Drop(String),
     //Printing
@@ -60,9 +63,11 @@ pub enum Instructions {
     //Process
     ProcessExit,
     //Control flow
+    JumpOnLastOnStack,
     Jump(usize),
     JumpIfFalse(usize),
     JumpIfTrue(usize),
+
     //Functions
     Call(String),
     // Halt
@@ -86,6 +91,7 @@ impl Instructions {
             Instructions::PushBool(_) => PUSH_BOOL,
             Instructions::PushNumber(_) => PUSH_NUMB,
             Instructions::Drop(_) => DROP,
+            Instructions::PushUsize(_)=>PUSH_USIZE,
 
             Instructions::WriteLnLastOnStack => WRITE_LN,
             Instructions::WriteLastOnStack => WRITE,
@@ -99,6 +105,7 @@ impl Instructions {
             Instructions::Jump(_) => JUMP,
             Instructions::JumpIfFalse(_) => JUMP_IF_FALSE,
             Instructions::JumpIfTrue(_) => JUMP_IF_TRUE,
+            Instructions::JumpOnLastOnStack=>JUMP_LAST_ON_STACK,
             Instructions::Call(fnc)=>unreachable!(),
 
             Instructions::Halt => HALT,

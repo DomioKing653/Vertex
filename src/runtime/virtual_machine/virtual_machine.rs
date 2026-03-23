@@ -57,6 +57,7 @@ impl VM {
                     self.ip += 1;
                 }
 
+
                 Instructions::Sub => {
                     let right = self.pop()?;
                     let left = self.pop()?;
@@ -110,7 +111,10 @@ impl VM {
                     self.stack.push(StringValue(s));
                     self.ip += 1;
                 }
-
+                Instructions::PushUsize(size)=>{
+                    self.stack.push(Value::Usize(size));
+                    self.ip+=1;
+                }
                 Instructions::LoadVar(name) => {
                     let variable = self
                         .variables
@@ -119,7 +123,6 @@ impl VM {
                     self.stack.push(variable.value.clone());
                     self.ip += 1;
                 }
-
                 Instructions::SaveVar(name) => {
                     let value = self.pop()?;
                     let var = Variable { value };
@@ -137,15 +140,15 @@ impl VM {
                     self.ip += 1;
                 }
 
-                    Instructions::WriteLnLastOnStack => {
-                        let val = self.pop()?;
-                        match val {
-                            StringValue(s) => println!("{}", s),
-                            Number(n) => println!("{}", n.to_string()),
-                            _ => unreachable!(),
-                        }
-                        self.ip += 1;
+                Instructions::WriteLnLastOnStack => {
+                    let val = self.pop()?;
+                    match val {
+                        StringValue(s) => println!("{}", s),
+                        Number(n) => println!("{}", n.to_string()),
+                        _ => unreachable!(),
                     }
+                    self.ip += 1;
+                }
 
                 Instructions::WriteLastOnStack => {
                     let val = self.pop()?;
@@ -192,6 +195,18 @@ impl VM {
                             self.ip += 1;
                         }
                         _ => return Err("JumpIfFalse expects boolean".into()),
+                    }
+                }
+                Instructions::JumpOnLastOnStack=>{
+                    let jumping_to = self.pop()?;
+                    self.ip = match jumping_to {
+                        Value::Usize(s)=>{
+                            s
+                        }
+                        _=>{
+                            unreachable!()
+                        }
+                        
                     }
                 }
                 Instructions::GreaterThan => {

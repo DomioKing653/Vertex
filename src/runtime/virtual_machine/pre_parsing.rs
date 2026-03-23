@@ -61,6 +61,10 @@ impl BytecodeLoader {
                     Instructions::PushNumber(value)
                 }
 
+                instructions::PUSH_USIZE => {
+                    let value = self.read_usize()?;
+                    Instructions::PushUsize(value)
+                }
                 instructions::WRITE_LN=> Instructions::WriteLnLastOnStack,
                 instructions::WRITE => Instructions::WriteLastOnStack,
                 instructions::PROCESS_EXIT => Instructions::ProcessExit,
@@ -76,6 +80,9 @@ impl BytecodeLoader {
                 instructions::JUMP_IF_FALSE => {
                     let addr = self.read_u16()? as usize;
                     Instructions::JumpIfFalse(addr)
+                }
+                instructions::JUMP_LAST_ON_STACK=>{
+                    Instructions::JumpOnLastOnStack
                 }
 
                 instructions::GREATER => Instructions::GreaterThan,
@@ -126,6 +133,18 @@ impl BytecodeLoader {
             .map_err(|_| "Failed to read u32")?;
         self.pos += 4;
         Ok(u32::from_le_bytes(bytes))
+    }
+
+
+    fn read_usize(&mut self) -> Result<usize, Box<dyn Error>> {
+        if self.pos + 8 > self.bytes.len() {
+            return Err("Unexpected EOF reading u32".into());
+        }
+        let bytes: [u8; 8] = self.bytes[self.pos..self.pos + 8]
+            .try_into()
+            .map_err(|_| "Failed to read usize")?;
+        self.pos += 8;
+        Ok(usize::from_le_bytes(bytes))
     }
 
     fn read_f32(&mut self) -> Result<f32, Box<dyn Error>> {

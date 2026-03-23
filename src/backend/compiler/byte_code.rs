@@ -136,24 +136,25 @@ impl Compiler {
                     ComptimeVariable {
                         value_type: argument_type.clone(),
                         is_const: false,
-                        tag: format!("{}{}", argumet.name.clone(),name.clone()),
+                        tag: format!("{}_{}", argumet.name.clone(),name.clone()),
                     },
                 )?;
 
             }
-
             for instruction in &mut function.body.clone()  {
                 instruction.compile(self)?;
                 
             }
+            self.out.push(Instructions::JumpOnLastOnStack);
             self.context.exit_scope();
         }
-        self.out[jump_placeholder] = Instructions::Jump(self.out.len());
+        self.out[jump_placeholder-1] = Instructions::Jump(self.out.len());
         Ok(())
     }
 
 }
 impl Compilable for NumberNode {
+
     fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         compiler.out.push(PushNumber(self.number as f32));
         Ok(Int)
@@ -812,6 +813,7 @@ impl Compilable for FunctionCallNode {
                 Ok(result)
             }
             CallType::Fn => {
+                //FIXME:Idk just fix the function arguments idk its not working
                 let old_fn = compiler.current_fn.clone();
                 let called_function: CompileTimeFunctionForCheck =
                     compiler.context.get_fn(&self.name)?;
@@ -826,8 +828,7 @@ impl Compilable for FunctionCallNode {
                 compiler.context.enter_scope();
                 for (called_arg, fnc_arg) in self.args.iter_mut().zip(called_function.args.iter()) {
                     let called_args_type = called_arg.as_mut().compile(compiler)?;
-                    let tag = compiler.context.get_variable(&fnc_arg.name).unwrap();
-                    compiler.out.push(Instructions::SaveVar(tag.tag.clone()));
+                    compiler.out.push(Instructions::SaveVar(format!("{}_{}",fnc_arg.name.clone(),self.name.clone())));
                     let final_fnc_type = compiler.context.get_type(&fnc_arg.argument_type)?;
                     if called_args_type != final_fnc_type {
                         return Err(TypeMismatch {
@@ -836,12 +837,11 @@ impl Compilable for FunctionCallNode {
                         });
                     }
                 }
-                //for statement in &mut called_function.body {
-                //    statement.compile(compiler)?;
-                //}
+
+                compiler.out.push(Instructions::PushUsize(compiler.out.len()+2));
                 compiler.out.push(Instructions::Call(self.name.clone()));
-                compiler.exit_scope();
                 compiler.current_fn = old_fn;
+                compiler.exit_scope();
                 Ok(Void)
             }
         }
