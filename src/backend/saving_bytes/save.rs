@@ -301,7 +301,7 @@ fn get_vertex_files_recursive(dir: &str) -> Vec<String> {
         let entry = entry.expect("Cannot read entry");
         if entry.file_type().is_file() {
             if let Some(ext) = entry.path().extension() {
-                if ext == "flare" {
+                if ext == "flare" || ext == "vtx" {
                     files.push(entry.path().to_string_lossy().to_string());
                 }
             }
