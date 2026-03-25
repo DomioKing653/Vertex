@@ -2,7 +2,6 @@ use crate::backend::compiler::{
     instructions::Instructions, optimization::constant_folding::constant_folding,
 };
 use std::collections::HashMap;
-use crate::backend::compiler::optimization::push_pop_optimization::push_pop_opt;
 
 /// Optimizes a vector of instructions while preserving jump address correctness.
 ///
@@ -35,10 +34,7 @@ pub fn optimize(code: Vec<Instructions>) -> Vec<Instructions> {
     // Apply constant folding and get the index mapping
     let (code, old_to_new) = constant_folding(code);
     // Fix jump addresses based on the index mapping
-    fix_jump_addresses(code.clone(), old_to_new);
-    let (code, old_to_new) = push_pop_opt(code);
-    // Fix jump addresses based on the index mapping
-    fix_jump_addresses(code, old_to_new)
+    fix_jump_addresses(code.clone(), old_to_new)
 }
 
 /// Fixes all jump addresses in the code using the provided index mapping.

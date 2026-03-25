@@ -87,7 +87,6 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
         process::exit(-3);
     }
 
-    compiler.optimize();
 
     println!(
         "  compiled {:<40} {:.4}s",
@@ -146,13 +145,8 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
 
     let mut final_file = Linker::link(objs);
 
-    if debug {
-        println!("\n--- BYTECODE ---");
-        for instr in &final_file {
-            println!("{:?}", instr);
-        }
-        println!("----------------\n");
-    }
+   final_file = Compiler::optimize(final_file);
+
 
     println!(
         "\x1b[32mFinished linking\x1b[0m in {:.4}s\n",
@@ -182,6 +176,16 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
         "\x1b[1;32mBuild finished\x1b[0m in {:.4}s",
         total_start.elapsed().as_secs_f32()
     );
+
+    if debug {
+        println!("\n--- BYTECODE ---");
+        let mut i = 0;
+        for instr in &final_file {
+            println!("{}->{:?}", i,instr);
+            i+=1;
+        }
+        println!("----------------\n");
+    }
 }
 
 fn compile_instr_to_bytes(

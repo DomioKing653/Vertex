@@ -78,7 +78,6 @@ pub struct Compiler {
     pub out: Vec<Instructions>,
     pub macros: MacroManager,
     pub current_fn: String,
-    pub last_return_address: Option<usize>,
     pub lookup: GlobalSymbols,
     pub function_types:HashMap<String,ComptimeValueType>,
     pub variables_type: HashMap<String, ComptimeValueType>,
@@ -97,7 +96,6 @@ impl Compiler {
             out: Vec::new(),
             macros: MacroManager::new(),
             current_fn: "none".into(),
-            last_return_address: None,
             lookup: GlobalSymbols {
                 symbols: HashMap::new(),
             },
@@ -106,9 +104,8 @@ impl Compiler {
             imports: vec![],
         }
     }
-    pub fn optimize(&mut self) {
-        let code = self.out.clone();
-        self.out = optimize(code);
+    pub fn optimize(instructions:Vec<Instructions>) -> Vec<Instructions> {
+        optimize(instructions)
     }
     pub fn exit_scope(&mut self) {
         for (var_name,_) in self.context.scopes.last().unwrap() {
