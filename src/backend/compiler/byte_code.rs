@@ -123,8 +123,9 @@ impl Compiler {
             .iter()
             .map(|(name, function)| (name.clone(), function.clone()))
             .collect();
-        //NOTE:I know that this probably could be done fast becouse this is like O(n)
-        for (name,function) in functions{
+        //NOTE:I know that this probably could be done fast becouse this is like O(F² * B) but i
+        //was to lazy to implemnt that :D
+         for (name,function) in functions{
             let length = self.out.len();
             for instruction in &mut self.out {
                 if let Instructions::Call(n) = instruction {
@@ -553,28 +554,16 @@ impl Compilable for VariableDefineNode {
     }
 
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
-        if let Some(ref value_type) = self.value_type {
-            let my_type =  compiler.context.get_type(value_type)?;
-            compiler.lookup.symbols.insert(
-                self.var_name.clone(),
-                Symbol {
-                    symbol_value_type: Some(my_type),
-                    symbol_type: Variable,
-                    is_constant: self.is_const,
-                    tag: format!("{}_{}", self.var_name, compiler.current_fn),
-                },
-            );
-        } else {
-            compiler.lookup.symbols.insert(
-                self.var_name.clone(),
-                Symbol {
-                    symbol_value_type: None,
-                    symbol_type: Variable,
-                    is_constant: self.is_const,
-                    tag: format!("{}_{}", self.var_name, compiler.current_fn),
-                },
-            );
-        }
+        let my_type = self.my_type(compiler)?; 
+        compiler.lookup.symbols.insert(
+            self.var_name.clone(),
+            Symbol {
+                symbol_value_type: Some(my_type),
+                symbol_type: Variable,
+                is_constant: self.is_const,
+                tag: format!("{}_{}", self.var_name, compiler.current_fn),
+            },
+        );
         Ok(())
     }
 
