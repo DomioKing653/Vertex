@@ -1,4 +1,7 @@
+use crate::backend::ast::nodes::CallType::Macro;
 use crate::backend::ast::nodes::ReturnNode;
+use crate::backend::compiler::instructions::Instructions::Drop;
+use crate::backend::errors::compiler::compiler_errors::CompileError::UndefinedVariable;
 use crate::backend::linker::link::SymbolType::Variable;
 use crate::backend::{
     ast::{
@@ -37,10 +40,6 @@ use std::{
     fmt::{self, Debug, Formatter},
     fs, process,
 };
-use crate::backend::ast::nodes::CallType::Macro;
-use crate::backend::compiler::instructions::Instructions::Drop;
-use crate::backend::errors::compiler::compiler_errors::CompileError::UndefinedVariable;
-
 
 pub trait CompilableClone {
     fn clone_box(&self) -> Box<dyn Compilable>;
@@ -68,7 +67,6 @@ pub fn indent_fn(n: usize) -> String {
     "  ".repeat(n)
 }
 
-
 impl Clone for Box<dyn Compilable> {
     fn clone(&self) -> Self {
         self.clone_box()
@@ -81,9 +79,9 @@ pub struct Compiler {
     pub macros: MacroManager,
     pub current_fn: String,
     pub lookup: GlobalSymbols,
-    pub function_types:HashMap<String,ComptimeValueType>,
+    pub function_types: HashMap<String, ComptimeValueType>,
     pub variables_type: HashMap<String, ComptimeValueType>,
-    pub imports:Vec<String>,
+    pub imports: Vec<String>,
 }
 
 impl Default for Compiler {
@@ -106,25 +104,27 @@ impl Compiler {
             imports: vec![],
         }
     }
-    pub fn optimize(instructions:Vec<Instructions>) -> Vec<Instructions> {
+    pub fn optimize(instructions: Vec<Instructions>) -> Vec<Instructions> {
         optimize(instructions)
     }
     pub fn exit_scope(&mut self) {
-        for (var_name,_) in self.context.scopes.last().unwrap() {
+        for (var_name, _) in self.context.scopes.last().unwrap() {
             self.out.push(Drop(var_name.clone()));
         }
         self.context.exit_scope();
     }
-    pub fn add_function(&mut self)->Result<(),CompileError>{
+    pub fn add_function(&mut self) -> Result<(), CompileError> {
         self.out.push(Instructions::Jump(0));
         let jump_placeholder = self.out.len();
-        let functions: Vec<_> = self.context.functions
+        let functions: Vec<_> = self
+            .context
+            .functions
             .iter()
             .map(|(name, function)| (name.clone(), function.clone()))
             .collect();
         //NOTE:I know that this probably could be done fast becouse this is like O(F² * B) but i
         //was to lazy to implemnt that :D
-        for (name,function) in functions{
+        for (name, function) in functions {
             let length = self.out.len();
             for instruction in &mut self.out {
                 if let Instructions::Call(n) = instruction {
@@ -134,30 +134,28 @@ impl Compiler {
                 }
             }
             self.context.enter_function_scope();
-            for argumet in function.args{ 
+            for argumet in function.args {
                 let argument_type = self.context.get_type(&argumet.argument_type)?;
                 self.context.add_variable(
                     argumet.name.clone(),
                     ComptimeVariable {
                         value_type: argument_type.clone(),
                         is_const: false,
-                        tag: format!("{}_{}", argumet.name.clone(),name.clone()),
+                        tag: format!("{}_{}", argumet.name.clone(), name.clone()),
                     },
                 )?;
             }
-            for instruction in &mut function.body.clone()  {
+            for instruction in &mut function.body.clone() {
                 instruction.compile(self)?;
-                
             }
             self.out.push(Instructions::JumpOnLastOnStack);
             self.context.exit_function_scope();
         }
-        self.out[jump_placeholder-1] = Instructions::Jump(self.out.len());
+        self.out[jump_placeholder - 1] = Instructions::Jump(self.out.len());
         Ok(())
-    } 
-
+    }
 }
-// 
+//
 // Nodes
 //
 impl Compilable for NumberNode {
@@ -553,7 +551,7 @@ impl Compilable for VariableDefineNode {
     }
 
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
-        let my_type = self.my_type(compiler)?; 
+        let my_type = self.my_type(compiler)?;
         compiler.lookup.symbols.insert(
             self.var_name.clone(),
             Symbol {
@@ -571,15 +569,13 @@ impl Compilable for VariableDefineNode {
         compiler
             .variables_type
             .insert(self.var_name.clone(), my_type.clone()?);
-        if compiler.lookup.symbols.contains_key(&self.var_name.clone()) {
-            unsafe {
-                compiler
-                    .lookup
-                    .symbols
-                    .get_mut(&self.var_name)
-                    .unwrap_unchecked()
-                    .symbol_value_type = Some(my_type?);
-            }
+        if let Some(symbol) = compiler.lookup.symbols.get_mut(&self.var_name) {
+            symbol.symbol_value_type = Some(my_type?);
+        } else {
+            // TODO: Add a valid error for missing symbol
+            return Err(CompileError::UndefinedType {
+                undefined_type: "TODO".to_string(),
+            });
         }
         Ok(())
     }
@@ -635,12 +631,13 @@ impl Compilable for VariableAccessNode {
             if let Some(var) = compiler.context.get_variable(&self.variable_name) {
                 (var.value_type.clone(), var.tag.clone())
             } else if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
-                unsafe {
-                    (
-                        symbol.symbol_value_type.clone().unwrap_unchecked(),
-                        symbol.tag.clone(),
-                    )
-                }
+                let Some(val) = symbol.symbol_value_type.clone() else {
+                    return Err(CompileError::UndefinedType {
+                        // TODO: Add explit error handling
+                        undefined_type: "TODO".to_string(),
+                    });
+                };
+                (val, symbol.tag.clone())
             } else {
                 return Err(CompileError::UndefinedVariable {
                     name: self.variable_name.clone(),
@@ -668,12 +665,11 @@ impl Compilable for VariableAccessNode {
         let value_type = if let Some(var) = compiler.variables_type.get(&self.variable_name) {
             var
         } else if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
-            &symbol
-                .symbol_value_type
-                .clone()
-                .unwrap()
+            &symbol.symbol_value_type.clone().unwrap()
         } else {
-            return Err(UndefinedVariable {name:self.variable_name.clone()})
+            return Err(UndefinedVariable {
+                name: self.variable_name.clone(),
+            });
         };
         Ok(value_type.clone())
     }
@@ -817,7 +813,11 @@ impl Compilable for FunctionCallNode {
                 }
                 for (called_arg, fnc_arg) in self.args.iter_mut().zip(called_function.args.iter()) {
                     let called_args_type = called_arg.as_mut().compile(compiler)?;
-                    compiler.out.push(Instructions::SaveVar(format!("{}_{}",fnc_arg.name.clone(),self.name.clone())));
+                    compiler.out.push(Instructions::SaveVar(format!(
+                        "{}_{}",
+                        fnc_arg.name.clone(),
+                        self.name.clone()
+                    )));
                     let final_fnc_type = compiler.context.get_type(&fnc_arg.argument_type)?;
                     if called_args_type != final_fnc_type {
                         return Err(TypeMismatch {
@@ -827,7 +827,9 @@ impl Compilable for FunctionCallNode {
                     }
                 }
 
-                compiler.out.push(Instructions::PushUsize(compiler.out.len()+2));
+                compiler
+                    .out
+                    .push(Instructions::PushUsize(compiler.out.len() + 2));
                 compiler.out.push(Instructions::Call(self.name.clone()));
                 Ok(Void)
             }
@@ -845,17 +847,19 @@ impl Compilable for FunctionCallNode {
     }
 
     fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        if self.call_type == Macro{
-            let mac = compiler.macros.macros.remove(&self.name).ok_or(
-                CompileError::UnknownMacro {
-                    name: self.name.clone(),
-                },
-            )?;
+        if self.call_type == Macro {
+            let mac =
+                compiler
+                    .macros
+                    .macros
+                    .remove(&self.name)
+                    .ok_or(CompileError::UnknownMacro {
+                        name: self.name.clone(),
+                    })?;
             let result = mac.my_type()?;
             compiler.macros.macros.insert(self.name.clone(), mac);
             Ok(result)
-        }
-        else {
+        } else {
             Ok(compiler.context.get_fn(&self.name)?.return_type)
         }
     }
@@ -869,16 +873,14 @@ impl Compilable for ReturnNode {
     }
     fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         if compiler.context.function_depth > 0 {
-            if let Some(mut r) = self.returns.clone(){
+            if let Some(mut r) = self.returns.clone() {
                 r.compile(compiler)?;
             }
-            compiler.out.push(Instructions::JumpOnLastOnStack);    
-        }
-        else {
-            return Err(CompileError::CannotReturnOutisdeOfFunction {  }); 
+            compiler.out.push(Instructions::JumpOnLastOnStack);
+        } else {
+            return Err(CompileError::CannotReturnOutisdeOfFunction {});
         }
         Ok(Void)
-        
     }
     fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         Ok(Void)
@@ -936,4 +938,3 @@ impl Compilable for ImportNode {
         Ok(Void)
     }
 }
-
