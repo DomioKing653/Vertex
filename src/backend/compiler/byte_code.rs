@@ -126,9 +126,10 @@ impl Compiler {
                 }
             }
         }
-        let mut fn_jmp_addresses:HashMap<String,usize> = HashMap::new();
+
     }
     pub fn add_function(&mut self)->Result<(),CompileError>{
+        let mut fn_jmp_addresses:HashMap<String,usize> = HashMap::new();
         self.out.push(Instructions::Jump(0));
         let jump_placeholder = self.out.len();
         let functions: Vec<_> = self
@@ -581,13 +582,11 @@ impl Compilable for VariableDefineNode {
             .insert(self.var_name.clone(), my_type.clone()?);
         if let Some(symbol) = compiler.lookup.symbols.get_mut(&self.var_name) {
             symbol.symbol_value_type = Some(my_type?);
+            return Ok(());
         } else {
-            // TODO: Add a valid error for missing symbol
-            return Err(CompileError::UndefinedType {
-                undefined_type: "TODO".to_string(),
-            });
+            return Ok(()); // NOTE: We dont need to do anything here becouse we are just adding
+                           // type to alredy existing symbol or just creating variabl
         }
-        Ok(())
     }
 
     fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
@@ -642,9 +641,8 @@ impl Compilable for VariableAccessNode {
                 (var.value_type.clone(), var.tag.clone())
             } else if let Some(symbol) = compiler.lookup.symbols.get(&self.variable_name) {
                 let Some(val) = symbol.symbol_value_type.clone() else {
-                    return Err(CompileError::UndefinedType {
-                        // TODO: Add explit error handling
-                        undefined_type: "TODO".to_string(),
+                    return Err(CompileError::CannotInferType{
+                        name: self.variable_name.clone(),
                     });
                 };
                 (val, symbol.tag.clone())
