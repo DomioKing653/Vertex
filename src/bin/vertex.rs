@@ -1,11 +1,13 @@
 //!Main vertex package manager and linker
-use vertex::backend::saving_bytes::compile_tools::build_directory;
 use serde::Deserialize;
 use std::{
     env::{self},
     fs::{self, File, remove_dir_all},
     io::Write,
-    process
+    process,
+};
+use vertex::backend::{
+    errors::cli_errors::CommandLineError, saving_bytes::compile_tools::build_directory,
 };
 
 #[derive(Deserialize)]
@@ -13,12 +15,23 @@ struct Config {
     name: String,
 }
 fn main() {
+    if let Err(err) = run_cli() {
+        eprintln!("{}", err);
+    }
+}
+
+fn run_cli() -> Result<(), CommandLineError> {
     let args: Vec<String> = env::args().collect();
-    if args.len() > 1 {
-        match args[1].as_str() {
-            "help"=>{
+
+    if args.len() < 1 {
+        return Err(CommandLineError::InvalidCommand);
+    }
+
+    if let Some(arg1) = args.get(1) {
+        match arg1.as_str() {
+            "help" => {
                 println!(
-                r#"vertex — project manager for the Vertex language
+                    r#"vertex — project manager for the Vertex language
 
                 USAGE:
                     vertex <COMMAND>
@@ -47,31 +60,35 @@ fn main() {
                     for the Vertex programming language.
                 "#
                 );
-
             }
             "create" => {
-                if args.len() > 2 {
-                    let project_name = args[2].clone();
+                if let Some(project_name) = args.get(2) {
+                    // TODO: Add appropriate directory
+                    fs::create_dir(&project_name)
+                        .map_err(|_| CommandLineError::ErrorCreatingDirectory)?;
 
-                    fs::create_dir(&project_name).unwrap();
-
-                    fs::create_dir(format!("{}/src", &project_name)).unwrap();
+                    fs::create_dir(format!("{}/src", &project_name))
+                        .map_err(|_| CommandLineError::ErrorCreatingDirectory)?;
 
                     let mut config = File::create(format!("{}/prj.toml", &project_name)).unwrap();
+
                     config
                         .write_all(format!("name = \"{}\"", &project_name).as_bytes())
                         .unwrap();
-                    let mut main_file =
-                        File::create(format!("{}/src/main.flare", &project_name)).unwrap();
+                    let mut main_file = File::create(format!("{}/src/main.flare", &project_name))
+                        .map_err(|_| CommandLineError::ErrorCreatingFile)?;
+
                     main_file
                         .write_all(b"writeLn!(\"Hello world\");\n")
                         .unwrap();
                 }
             }
             "build" => {
-                let debug = parse_flags(args);
+                let debug = parse_flags(&args);
 
-                let tex = fs::read_to_string("prj.toml").unwrap();
+                let tex = fs::read_to_string("prj.toml")
+                    .map_err(|_| CommandLineError::ErrorFindingDirectory)?;
+
                 let config: Config = match toml::from_str(&tex) {
                     Err(e) => {
                         print!("{}", e);
@@ -84,25 +101,17 @@ fn main() {
                     print!("cannot find main.flare in ./src");
                     process::exit(-1);
                 });
-                build_directory("src/".to_string(), config.name, debug);
+                build_directory("src/".to_string(), config.name, debug)
             }
-            "clear" => {
-                remove_dir_all("./out").unwrap();
-            }
-            _ => {
-                println!("No such command. Use 'vertex help' for more info")
-            }
+            "clear" => remove_dir_all("./out").unwrap(),
+            _ => return Err(CommandLineError::NoSuchCommand),
         }
     } else {
-        println!("Expected argument");
+        return Err(CommandLineError::InvalidCommand);
     }
+    Ok(())
 }
 
-fn parse_flags(args: Vec<String>) -> bool {
-    for arg in args {
-        if arg == "-d" {
-            return true;
-        }
-    }
-    false
+fn parse_flags(args: &Vec<String>) -> bool {
+    args.iter().any(|arg| arg == "-d")
 }
