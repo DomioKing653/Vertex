@@ -29,9 +29,7 @@ Pre-built binaries are currently available for Linux. For other platforms, pleas
 ### Your First Program
 
 ```vertex
-fn main() {
-    print("Hello, Vertex!")
-}
+writeLn!("Hello from Vertex :>")
 ```
 
 Learn more in our [Getting Started Guide](docs/GETTING_STARTED.md).
