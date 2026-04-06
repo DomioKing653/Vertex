@@ -1,5 +1,7 @@
 #!/bin/sh
 
+
+sh -c "cargo clear && cargo build"
 CMD="target/debug/vertexC build testingCode/function_scope.flare scopes.out -d"
 
 while true

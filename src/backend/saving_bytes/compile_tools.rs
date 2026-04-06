@@ -1,4 +1,3 @@
-
 use crate::backend::{
     ast::parser::Parser,
     compiler::{
@@ -57,7 +56,6 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
         }
         Ok(tokens) => tokens,
     };
-
     /*
      * Parser
      */
@@ -67,7 +65,6 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
         println!("\x1b[1;31m{}\x1b[0m", e);
         process::exit(-2)
     });
-
     /*
      * Lookup
      */
@@ -97,7 +94,6 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
         dir,
         file_start.elapsed().as_secs_f32()
     );
-
     ObjFile {
         instructions: compiler.out,
         name: dir.clone().replace("src/", ""),

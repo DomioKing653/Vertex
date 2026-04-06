@@ -99,6 +99,10 @@ fn run_cli() -> Result<(), CommandLineError> {
             );
             Ok(())
         }
+        "build-lib"=>{
+            Ok(())
+
+        }
         _ => Err(NoSuchCommand),
     }
 }
