@@ -10,13 +10,6 @@ def run(cmd):
     print("Running:", " ".join(cmd))
     subprocess.check_call(cmd)
 
-
-# clone repo
-if not path.exists(DIR):
-    run(["git", "clone", REPO])
-else:
-    print('Repo is already cloned')
-
 # build binaries
 chdir(DIR)
 

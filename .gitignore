@@ -8,3 +8,4 @@
 /target/.rustc_info.json
 /build.cmd
 /out
+src/codegen/target

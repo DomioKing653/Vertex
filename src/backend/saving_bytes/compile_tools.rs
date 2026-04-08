@@ -135,6 +135,7 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
     /*
      * Linking
      */
+
     println!("\x1b[1mLinking\x1b[0m");
 
     let link_start = Instant::now();
@@ -152,6 +153,7 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
         }
         println!("----------------\n");
     }
+
     println!(
         "\x1b[32mFinished linking\x1b[0m in {:.4}s\n",
         link_start.elapsed().as_secs_f32()
@@ -165,7 +167,29 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
     let write_start = Instant::now();
 
     let out_path = format!("out/{}", out);
+
     compile_instr_to_bytes(out_path, &mut final_file).expect("Cannot load binary file");
+
+    /*
+     * Compiling to exe
+     */
+    let bytecode_path = format!("out/{}",out);
+    let temp_launcher = format!(
+        r#"
+        static BYTECODE: &[u8] = include_bytes!(r"{bytecode_path}");
+
+        fn main() {{
+            extern "C" {{
+                fn vm_entry(ptr: *const u8, len: usize);
+            }}
+            unsafe {{
+                vm_entry(BYTECODE.as_ptr(), BYTECODE.len());
+            }}
+        }}
+        "#,
+        bytecode_path = bytecode_path
+        
+    );
 
     println!(
         "\x1b[32mFinished writing\x1b[0m in {:.4}s\n",
@@ -176,9 +200,10 @@ pub fn build_directory(dir: String, out: String, debug: bool) {
      * TOTAL TIME
      */
     println!(
-        "\x1b[1;32mBuild finished\x1b[0m in {:.4}s",
+        "\x1b[1;32mBuild finished\x1b[0m in {:.3}s",
         total_start.elapsed().as_secs_f32()
     );
+
 }
 
 fn ensure_target_dir() {
