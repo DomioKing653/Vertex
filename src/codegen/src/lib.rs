@@ -1,5 +1,4 @@
 use vertex::runtime::virtual_machine::virtual_machine::VM;
-
 #[no_mangle]
 pub extern "C" fn vm_entry(ptr: *const u8, len: usize) {
     if ptr.is_null() || len == 0 {

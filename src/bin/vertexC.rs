@@ -1,7 +1,6 @@
 // NOTE:This is the main Vertex compiler CLI used until `vertex` is ready for production.
 // It is intended to compile a single file without external dependencies.
-// Currently, it does not have a working linker.
-// Once `vertex` is ready, this tool will likely be replaced or deprecated and not be ready for
+// Currently, it does not have a working linker. Once `vertex` is ready, this tool will likely be replaced or deprecated and not be ready for
 // production.
 use
 std::env;

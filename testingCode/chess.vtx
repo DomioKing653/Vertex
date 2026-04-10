@@ -10,8 +10,7 @@ fnc printunderscores(count:int):void{
 
 const size:int = 10;
 printunderscores(size);
-
-var it:string = 0;
+var it:int = 0;
 while (it < size)
 {
 	write!("|");
