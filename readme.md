@@ -16,9 +16,9 @@ A modern, statically-typed programming language designed for clarity, performanc
 
 | Platform | Status |
 |----------|--------|
-| Linux    | ✅ Fully Supported |
-| macOS    | 🔧 Build from source |
-| Windows  | 🔧 Build from source |
+| Linux    |  Big releases on github |
+| macOS    |  Build from sourc |
+| Windows  |  Build from source |
 
 Pre-built binaries are currently available for Linux. For other platforms, please build from source.
 

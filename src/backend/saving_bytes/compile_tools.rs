@@ -70,6 +70,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
         clrprintln!("$red|{}", e);
         process::exit(-3); 
     }
+
     /*
      * Type check
      */
