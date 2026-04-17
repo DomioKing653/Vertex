@@ -17,15 +17,15 @@ A modern, statically-typed programming language designed for clarity, performanc
 | Platform | Status |
 |----------|--------|
 | Linux    |  Big releases on github |
-| macOS    |  Build from sourc |
+| macOS    |  Build from source |
 | Windows  |  Build from source |
 
 Pre-built binaries are currently available for Linux. For other platforms, please build from source.
 ### Dependencies
 - Zig toolchain
-- Rust(you dont need to but its good to have)
+- Rust(you don't need to but it's good to have)
 ### Installation
-- Install it from github releases(Linux olny)
+- Install it from Github releases(Linux only)
 - Else build it from source
 
 ### Your First Program
