@@ -61,7 +61,7 @@ fn run_cli() -> Result<(), CommandLineError> {
                 "#
                 );
             }
-            "create" => {
+            "new" => {
                 if let Some(project_name) = args.get(2) {
                     // TODO: Add appropriate directory
                     fs::create_dir(&project_name)
