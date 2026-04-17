@@ -9,10 +9,7 @@ use crate::clrprintln;
 use crate::backend::linker::obj_file::ObjFile;
 use crate::backend::saving_bytes::save::compile_instr_to_bytes;
 use std::{
-    fs,
-    path::{Path, PathBuf},
-    process,
-    time::Instant,
+ fs,  path::{Path, PathBuf}, process, time::Instant
 };
 use walkdir::WalkDir;
 fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec<Instructions>) {
@@ -200,7 +197,11 @@ pub fn main() !void {{
 
     let tmp_launcher_path = "tmp_launcher.zig";
     fs::write(tmp_launcher_path, temp_launcher).unwrap();
+
+   
+
     let runtime_path = find_libvm_runtime(Path::new(".")).unwrap();
+    
     let status = Command::new("zig")
         .args(&[
             "build-exe",
@@ -232,8 +233,9 @@ pub fn main() !void {{
 
 fn ensure_target_dir() {
     let target = std::env::current_dir().unwrap().join("out/bin");
-    if !target.exists() {
-        fs::create_dir(target).expect("Cannot create target directory");
+   
+    if !&target.exists() {
+        fs::create_dir_all(target).expect("Could not create the binary output directory");
     }
 }
 
