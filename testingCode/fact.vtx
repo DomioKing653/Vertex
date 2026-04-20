@@ -1,0 +1,8 @@
+fnc fact(count: int):int{
+    if (count > 0) {
+        return fact(count - 1) * count;
+    }
+}
+
+var result = fact(5);
+writeLn!(result);
