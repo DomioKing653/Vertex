@@ -34,7 +34,7 @@ Pre-built binaries are currently available for Linux. For other platforms, pleas
 writeLn!("Hello from Vertex :>")
 ```
 
-Learn more in our [Getting Started Guide](docs/GETTING_STARTED.md).
+Learn more in our [Getting Started Guide](docs/BegginersGuide.md).
 
 
 ## Building from Source
