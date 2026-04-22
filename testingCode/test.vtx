@@ -10,4 +10,5 @@ fnc test(i:int):int{
     return (test(i-1)+test1(i));
   }
 }
-test(50);
+var x = test(50);
+writeLn!(x);

@@ -51,7 +51,15 @@ impl Lexer {
                     }
                     self.advance();
                     continue;
+                },
+                '#'=>{
+                    self.advance();
+                    while self.current_char!='\n' {
+                        self.advance();
+                    }
+                    self.advance();
                 }
+
                 '"' => {
                     let token = self.read_string()?;
                     self.final_tokens.push(token);
