@@ -30,7 +30,7 @@ Pre-built binaries are currently available for Linux. For other platforms, pleas
 
 ### Your First Program
 
-```vertex
+```typescript
 writeLn!("Hello from Vertex :>")
 ```
 
