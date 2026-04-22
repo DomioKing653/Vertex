@@ -4,9 +4,9 @@ use crate::{
     backend::lexer::tokens::{
         Token, TokenKind,
         TokenKind::{
-            AS, CLOSINGBRACE, COLON, CONST, DIVIDE, ELSE, EOF, EQUAL, FLOAT, FNC, IDENTIFIER, IF,
+            AS, CLOSINGBRACE, COLON, CONST, DIVIDE, ELSE, EOF, ASSIGN, FLOAT, FNC, IDENTIFIER, IF,
             LEFTPAREN, LOOP, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS, RIGHTPAREN, STR, TIMES, VAR,
-            WHILE,
+            WHILE,EQUAL
         },
     },
 };
@@ -17,10 +17,8 @@ pub struct Lexer {
     token_count: usize,
     source_text: Vec<char>,
     final_tokens: Vec<Token>,
-
     current_line_char:usize,
     current_line:usize,
-
     errors:Vec<LexerErrorKind>,
 
 }
@@ -75,10 +73,21 @@ impl Lexer {
                     token_kind: SEMICOLON,
                     token_value: self.current_char.to_string(),
                 }),
-                '=' => self.final_tokens.push(Token {
-                    token_kind: EQUAL,
-                    token_value: self.current_char.to_string(),
-                }),
+                '=' => {
+                    if self.source_text[self.token_idx+1]=='=' {
+                        self.advance();
+                        self.final_tokens.push(Token{
+                            token_kind:EQUAL,
+                            token_value:self.current_char.to_string()
+                        });
+                        
+                    }else {
+                        self.final_tokens.push(Token {
+                            token_kind: ASSIGN,
+                            token_value: self.current_char.to_string(),
+                        })
+                    }
+                },
                 '(' => self.final_tokens.push(Token {
                     token_kind: LEFTPAREN,
                     token_value: self.current_char.to_string(),

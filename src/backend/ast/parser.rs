@@ -8,14 +8,12 @@ use crate::backend::{
             while_statement::WhileStatement,
         },
     },
-    compiler::byte_code::Compilable,
+    compiler::{byte_code::Compilable},
     errors::parser_errors::ParserError::{self, UnexpectedToken},
     lexer::tokens::{
         Token,
         TokenKind::{
-            self, CLOSINGBRACE, COLON, COMMA, CONST, DIVIDE, ELSE, EOF, EQUAL, FALSE, FLOAT, FNC,
-            GREATER, IDENTIFIER, IF, LEFTPAREN, LESS, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS,
-            RIGHTPAREN, SEMICOLON, STRING, TIMES, TRUE, USE, VALUE, VAR, WHILE,
+            self, ASSIGN, CLOSINGBRACE, COLON, COMMA, CONST, DIVIDE, ELSE, EOF, FALSE, FLOAT, FNC, GREATER, IDENTIFIER, IF, LEFTPAREN, LESS, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS, RIGHTPAREN, SEMICOLON, STRING, TIMES, TRUE, USE, VALUE, VAR, WHILE,EQUAL
         },
     },
 };
@@ -176,10 +174,10 @@ impl Parser {
                 self.expect(SEMICOLON)?;
                 value
             }
-            IDENTIFIER if self.peek() == EQUAL => {
+            IDENTIFIER if self.peek() == ASSIGN => {
                 let id = self.current_token().token_value.clone();
                 self.advance();
-                self.expect(EQUAL)?;
+                self.expect(ASSIGN)?;
                 let value = self.parse_expr()?;
                 self.expect(SEMICOLON)?;
                 Ok(Box::new(VariableAssignNode { name: id, value }))
@@ -316,7 +314,7 @@ impl Parser {
             value_type = Some(self.expect(IDENTIFIER)?.token_value);
         }
         let value: Option<Box<dyn Compilable>>;
-        if self.current_token().token_kind == EQUAL {
+        if self.current_token().token_kind == ASSIGN {
             self.advance();
             value = Some(self.parse_expr()?);
         } else {
@@ -343,7 +341,9 @@ impl Parser {
 
     fn parse_comparison(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         let mut factor = self.parse_term()?;
-        while self.current_token().token_kind == GREATER || self.current_token().token_kind == LESS
+        while self.current_token().token_kind == GREATER
+        || self.current_token().token_kind == LESS
+        || self.current_token().token_kind == EQUAL
         {
             let operator = self.current_token().token_kind.clone();
             self.advance();

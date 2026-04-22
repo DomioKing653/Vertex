@@ -1,8 +1,11 @@
-fnc fact(count: int):int{
-    if (count > 0) {
-        return fact(count - 1) * count;
-    }
+fnc fib(n: int): int {
+    if (n<2) {
+        return n;
+    } 
+    var fib1 = fib(n - 1);
+    var fib2 = fib(n - 2);
+    var x = fib1+fib2;
+    return x;
 }
-
-var result = fact(5);
+var result = fib(5);
 writeLn!(result);

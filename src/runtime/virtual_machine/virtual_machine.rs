@@ -40,7 +40,6 @@ impl VM {
             if self.ip >= self.instructions.len() {
                 return Err("Unexpected EOF".into());
             }
-
             let current_instruction = self.instructions[self.ip].clone();
             match current_instruction {
                 Instructions::Add => {
@@ -58,8 +57,6 @@ impl VM {
                     self.stack.push(result);
                     self.ip += 1;
                 }
-
-
                 Instructions::Sub => {
                     let right = self.pop()?;
                     let left = self.pop()?;
@@ -253,7 +250,6 @@ impl VM {
                     }
                     break;
                 }
-
             }
         }
         Ok(())

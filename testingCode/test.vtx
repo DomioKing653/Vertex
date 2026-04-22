@@ -1,0 +1,13 @@
+fnc test1(i:int):int{
+  return i+1;
+}
+fnc test(i:int):int{
+  writeLn!(i);
+  if(i==0){
+    return 1;
+  }
+  else{
+    return (test(i-1)+test1(i));
+  }
+}
+test(50);

@@ -56,5 +56,8 @@ pub enum CompileError {
     TypeAlredyExists{name_of_type:String},
 
     #[error("[E0015]Cannot return outside of a function")]
-    CannotReturnOutisdeOfFunction{}
+    CannotReturnOutisdeOfFunction{},
+
+    #[error("[E0016]Need to have specifed return type at function {function_name}")]
+    NeedToHaveSpecifiedReturnType{function_name:String}
 }

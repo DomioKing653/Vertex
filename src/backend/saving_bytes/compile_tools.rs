@@ -194,7 +194,6 @@ fn ensure_target_dir() {
 
 fn get_vertex_files_recursive(dir: &str) -> Vec<String> {
     let mut files = Vec::new();
-
     for entry in WalkDir::new(dir) {
         let entry = entry.expect("Cannot read entry");
         if entry.file_type().is_file() {

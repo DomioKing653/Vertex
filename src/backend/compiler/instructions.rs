@@ -44,7 +44,7 @@ pub enum Instructions {
     //Comparison
     GreaterThan,
     LessThan ,
-    Equal ,
+    Equal,
     //Variables
     LoadVar(String),
     SaveVar(String),

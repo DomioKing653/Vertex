@@ -334,7 +334,17 @@ impl Compilable for BinaryOpNode {
                     right: left,
                 }),
             },
-            _ => unreachable!(),
+            TokenKind::EQUAL =>
+                match (&left,&right) {
+                    (l,r) if l == r=>{
+                        compiler.out.push(Instructions::Equal);
+                        Ok(Bool)
+                    }
+                    _=>Err(CompileError::InvalidBinaryOp { op: "==", left, right})
+                    
+                }
+            _=>unreachable!()
+            
         }
     }
 

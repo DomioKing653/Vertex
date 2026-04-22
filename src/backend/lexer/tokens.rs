@@ -9,11 +9,12 @@ pub enum TokenKind {
     RIGHTPAREN,
     OPENINGBRACE,
     CLOSINGBRACE,
-    EQUAL,
+    ASSIGN,
     MODULO,
     //BOOLEAN
     GREATER,
     LESS,
+    EQUAL,
     //VALUES
     NUMB,
     FLOAT,
