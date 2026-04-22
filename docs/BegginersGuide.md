@@ -15,11 +15,11 @@ For the Hello World program you need 1 thing some form of print.
 In vertex we can write to the terminal using `writeLn!();` or `write!();`. The difference between the two `writeLn!();` adds the new line character while `write!();` does not.
 
 As for the hello world it can look something like this:
-```
+```typescript
 writeLn!("Hello World");
 ```
 or 
-```
+```typescript
 write!("Hello World");
 ```
 
@@ -31,13 +31,13 @@ In vertex we can currently use 4 types:
 3. `flt` a floating point integer like 1.5 or 3.14
 4. `string` a string like "hello"
 Types can be inferred in cases like:
-```
-var x = 10; # inferrs to an if 
+```typescript
+var x = 10; # inferrs to an int 
 ```
 ## Variables
 To declare a variable we use the `var` keyword or `const` for a constant.
 For example:
-```
+```typescript
 var number: int = 10;
 var float: flt = 3.14;
 var name: string = "vertex";
@@ -56,14 +56,14 @@ The difference between the two categories is in the name you can only print, pri
 ## User input
 We can take user input by using the `readInput!()` macro.
 For example:
-```
+```typescript
 const userName:string = readInput!("Whats your name?");
 
 writeLn!("Your name is",userName)
 ```
 ## Conditions
 The `if` and `else` statements can be used to evaluate a condition to `bool` simple yet elegant.
-```
+```typescript
 if (condition) {
 # Do stuff
 }else{
@@ -76,7 +76,7 @@ There are only 2 supported conditions `>` and `<`.
 We have the good old `while` as our main loop here which works similar to an if but it repeats the body of it as long as the condition evaluates to `true`.
 
 Example:
-```
+```typescript
 while(condition) {
 # Loop body
 }
@@ -84,7 +84,7 @@ while(condition) {
 
 ## Functions
 A function is a fundamental part of code and also extremely simple. We use the `fnc` keyword for declaring a function and functions follow a simple structure of:
-```
+```typescript
 fnc name(arg: type, arg2: type): return_type {
 # Function body
 }
@@ -93,7 +93,7 @@ fnc name(arg: type, arg2: type): return_type {
 The available return types are the Data Types and `void`. `void` is used in functions that return nothing.
 
 Example function:
-```
+```typescript
 fnc add(a: int, b: int): int {
 	var sum: int = a + b;
 	return sum;
@@ -104,8 +104,8 @@ writeLn!(x);
 ```
 
 Example void function:
-```
-fnc hello() {
+```typescript
+fnc hello(): void {
 	writeLn!("hello");
 }
 
@@ -114,7 +114,7 @@ hello();
 
 ## Exit process
 We can use the `processExit!()` macro to exit the program with an `int` argument.
-```
+```typescript
 const x: int = 5;
 if(x > 7){
   processExit!(195);
