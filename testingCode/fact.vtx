@@ -1,11 +1,10 @@
-fnc fib(n: int): int {
-    if (n<2) {
-        return n;
-    } 
-    var fib1 = fib(n - 1);
-    var fib2 = fib(n - 2);
-    var x = fib1+fib2;
-    return x;
+fnc fib(i:int):int{
+    if(i<2){
+        return 1;
+    }
+    else{
+        return (fib(i-1)+fib(i-2));
+    }
 }
-var result = fib(5);
-writeLn!(result);
+var res = fib(6);
+writeLn!(res);

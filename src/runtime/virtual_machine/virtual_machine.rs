@@ -13,7 +13,7 @@ use {
 pub struct VM {
     pub ip: usize,
     pub stack: Vec<Value>,
-    pub jump_stack:Vec<usize>,
+    pub jump_stack: Vec<usize>,
     pub instructions: Vec<Instructions>,
     pub variables: HashMap<String, Variable>,
 }
@@ -26,7 +26,7 @@ impl VM {
             stack: Vec::new(),
             instructions,
             variables: std::collections::HashMap::new(),
-            jump_stack:Vec::new()
+            jump_stack: Vec::new(),
         })
     }
 
@@ -110,9 +110,9 @@ impl VM {
                     self.stack.push(StringValue(s));
                     self.ip += 1;
                 }
-                Instructions::PushJmpAdress(size)=>{
+                Instructions::PushJmpAdress(size) => {
                     self.jump_stack.push(size);
-                    self.ip+=1;
+                    self.ip += 1;
                 }
                 Instructions::LoadVar(name) => {
                     let variable = self
@@ -196,8 +196,8 @@ impl VM {
                         _ => return Err("JumpIfFalse expects boolean".into()),
                     }
                 }
-                Instructions::JumpOnLastOnStack=>{
-                    self.ip = self.jump_stack.pop().unwrap();               
+                Instructions::JumpOnLastOnStack => {
+                    self.ip = self.jump_stack.pop().unwrap();
                 }
                 Instructions::GreaterThan => {
                     let right = self.pop()?;
@@ -239,11 +239,10 @@ impl VM {
                     self.stack.push(StringValue(input.trim().to_string()));
                     self.ip += 1;
                 }
-                Instructions::Drop(variable) =>{
+                Instructions::Drop(variable) => {
                     self.variables.remove(&variable);
                     self.ip += 1;
                 }
-                Instructions::Call(_)=>unreachable!(),
                 Instructions::Halt => {
                     if !self.stack.is_empty() {
                         println!("{:?}", self.stack[0]);

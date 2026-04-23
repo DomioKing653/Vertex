@@ -76,6 +76,12 @@ pub fn compile_instr_to_bytes(
                 writer.write_all(&(bytes.len() as u32).to_le_bytes())?;
                 writer.write_all(&v.as_bytes())?
             }
+            Instructions::AssignVar(v) => {
+                writer.write_all(&[opcode])?;
+                let bytes = v.as_bytes();
+                writer.write_all(&(bytes.len() as u32).to_le_bytes())?;
+                writer.write_all(&v.as_bytes())?
+            }
             Instructions::Jump(adr) => {
                 writer.write_all(&[opcode])?;
                 writer.write_all(&(*adr as u16).to_le_bytes())?;
@@ -99,7 +105,6 @@ pub fn compile_instr_to_bytes(
             Instructions::ReadInput => {
                 writer.write_all(&[opcode])?;
             }
-            Instructions::Call(_) => unreachable!(),
 
             Instructions::Halt => writer.write_all(&[opcode])?,
         }

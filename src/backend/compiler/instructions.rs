@@ -31,6 +31,7 @@ pub const PROCESS_EXIT:u8 = 61;
 // VARS
 pub const STORE_VAR:u8 = 50;
 pub const LOAD_VAR:u8 = 51;
+pub const ASSIGN_VAR:u8 = 52;
 //HALT
 
 pub const HALT:u8 = 255;
@@ -48,6 +49,7 @@ pub enum Instructions {
     //Variables
     LoadVar(String),
     SaveVar(String),
+    AssignVar(String),
     //Values
     PushString(String),
     PushBool(bool),
@@ -65,9 +67,6 @@ pub enum Instructions {
     Jump(usize),
     JumpIfFalse(usize),
     JumpIfTrue(usize),
-
-    //Functions
-    Call(String),
     // Halt
     Halt,
 }
@@ -98,13 +97,13 @@ impl Instructions {
 
             Instructions::LoadVar(_) => LOAD_VAR,
             Instructions::SaveVar(_) => STORE_VAR,
+            Instructions::AssignVar(_) => ASSIGN_VAR,
 
             Instructions::Jump(_) => JUMP,
             Instructions::JumpIfFalse(_) => JUMP_IF_FALSE,
             Instructions::JumpIfTrue(_) => JUMP_IF_TRUE,
             Instructions::JumpOnLastOnStack=>JUMP_LAST_ON_STACK,
             Instructions::Halt => HALT,
-            _ => std::process::exit(-95)
             
         }
     }

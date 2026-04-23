@@ -51,6 +51,12 @@ impl BytecodeLoader {
                     Instructions::SaveVar(name)
                 }
 
+                instructions::ASSIGN_VAR => {
+                    let len = self.read_u32()? as usize;
+                    let name = self.read_string(len)?;
+                    Instructions::AssignVar(name)
+                }
+
                 instructions::PUSH_BOOL => {
                     let value = self.read_u8()? != 0;
                     Instructions::PushBool(value)

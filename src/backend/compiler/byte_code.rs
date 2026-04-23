@@ -110,8 +110,8 @@ impl Compiler {
         optimize(instructions)
     }
     pub fn exit_scope(&mut self) {
-        for (var_name, _) in self.context.scopes.last().unwrap() {
-            self.out.push(Drop(var_name.clone()));
+        for (_, var_info) in self.context.scopes.last().unwrap() {
+            self.out.push(Drop(var_info.tag.clone()));
         }
         self.context.exit_scope();
     }
@@ -843,13 +843,14 @@ impl Compilable for FunctionCallNode {
                 compiler
                     .out
                     .push(Instructions::PushJmpAdress(compiler.out.len() + 2));
-                compiler.out.push(Instructions::Call(self.name.clone()));
+                compiler.out.push(Instructions::Jump(0));
+                let location_for_tmp_jmp = compiler.out.len() - 1;
                 if let Some(a) = compiler.function_call_addresses.get_mut(&self.name) {
-                    a.push(compiler.out.len() - 1);
+                    a.push(location_for_tmp_jmp);
                 } else {
                     compiler
                         .function_call_addresses
-                        .insert(self.name.clone(), vec![compiler.out.len() - 1]);
+                        .insert(self.name.clone(), vec![location_for_tmp_jmp]);
                 }
                 Ok(self.my_type(compiler)?)
             }

@@ -11,6 +11,7 @@ use crate::{
     },
 };
 use crate::backend::errors::lexer_errors::LexerError;
+
 pub struct Lexer {
     current_char: char,
     token_idx: usize,
@@ -37,6 +38,19 @@ impl Lexer {
             
         }
     }
+    fn consume_char(&mut self)->Result<(),LexerError>{
+        Ok(())
+    }
+    fn consume_white_spaces(&mut self)->Result<(),LexerError>{
+        if self.current_char == '\n'{
+            self.current_line += 1;
+            self.current_line_char = 0;
+        }
+        self.advance();
+        Ok(())
+    }
+
+
     pub fn tokenize(&mut self) -> Result<&Vec<Token>, LexerError> {
         if self.source_text.is_empty() {
             return Err(LexerError{err: LexerErrorKind::EmptyFile.into(),line:0,char:0});
@@ -45,19 +59,11 @@ impl Lexer {
         while self.current_char != '\0' {
             match self.current_char {
                 ' ' | '\n' | '\t' | '\r' => {
-                    if self.current_char == '\n'{
-                        self.current_line += 1;
-                        self.current_line_char = 0;
-                    }
-                    self.advance();
+                    self.consume_white_spaces()?;
                     continue;
                 },
                 '#'=>{
-                    self.advance();
-                    while self.current_char!='\n' {
-                        self.advance();
-                    }
-                    self.advance();
+                    self.consume_comment();
                 }
 
                 '"' => {
@@ -121,7 +127,6 @@ impl Lexer {
                     token_value: self.current_char.to_string(),
                 }),
                 '/' =>{
-                    //FIXME:Add comments synatx
                     self.final_tokens.push(Token {
                     token_kind: DIVIDE,
                     token_value: self.current_char.to_string(),
@@ -167,6 +172,14 @@ impl Lexer {
             token_value: "EOF".to_string(),
         });
         Ok(&self.final_tokens)
+    }
+
+    fn consume_comment(&mut self) {
+        self.advance();
+        while self.current_char!='\n' {
+            self.advance();
+        }
+        self.advance();
     }
     //FIXME:Out of bounds error if í,é,č etc is in the identifier name
 
