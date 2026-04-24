@@ -39,7 +39,7 @@ impl Compilable for IfStatement {
                 stmt.compile(compiler)?;
             }
         }
-        compiler.context.exit_scope();
+        compiler.exit_scope();
 
         let end = compiler.out.len();
         compiler.out[jump_end_pos] = Instructions::Jump(end); // Jump to end

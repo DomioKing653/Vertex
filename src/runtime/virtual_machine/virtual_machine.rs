@@ -4,7 +4,6 @@ use {
         runtime::virtual_machine::{
             pre_parsing::BytecodeLoader,
             value::Value::{self, Bool, Number, StringValue},
-            variables::variable::Variable,
         },
     },
     std::{collections::HashMap, error::Error, string::String},
@@ -15,7 +14,7 @@ pub struct VM {
     pub stack: Vec<Value>,
     pub jump_stack: Vec<usize>,
     pub instructions: Vec<Instructions>,
-    pub variables: HashMap<String, Variable>,
+    pub variables: HashMap<String, Vec<Value>>,
 }
 
 impl VM {
@@ -115,17 +114,30 @@ impl VM {
                     self.ip += 1;
                 }
                 Instructions::LoadVar(name) => {
-                    let variable = self
+                    let variable_stack = self
                         .variables
                         .get(&name)
                         .ok_or_else(|| format!("Variable '{}' not found", name))?;
-                    self.stack.push(variable.value.clone());
+                    let value = variable_stack.last().ok_or_else(|| format!("Variable stack for '{}' is empty", name))?;
+                    self.stack.push(value.clone());
                     self.ip += 1;
                 }
                 Instructions::SaveVar(name) => {
                     let value = self.pop()?;
-                    let var = Variable { value };
-                    self.variables.insert(name, var);
+                    self.variables.entry(name).or_insert_with(Vec::new).push(value);
+                    self.ip += 1;
+                }
+                Instructions::AssignVar(name) => {
+                    let value = self.pop()?;
+                    let variable_stack = self
+                        .variables
+                        .get_mut(&name)
+                        .ok_or_else(|| format!("Variable '{}' not found for assignment", name))?;
+                    if let Some(top) = variable_stack.last_mut() {
+                        *top = value;
+                    } else {
+                        return Err(format!("Variable stack for '{}' is empty during assignment", name));
+                    }
                     self.ip += 1;
                 }
 
@@ -177,7 +189,7 @@ impl VM {
                         Bool(false) => {
                             self.ip += 1;
                         }
-                        _ => return Err("JumpIfFalse expects boolean".into()),
+                        _ => return Err("JumpIfTrue expects boolean".into()),
                     }
                 }
                 Instructions::Jump(addr) => {
@@ -197,7 +209,7 @@ impl VM {
                     }
                 }
                 Instructions::JumpOnLastOnStack => {
-                    self.ip = self.jump_stack.pop().unwrap();
+                    self.ip = self.jump_stack.pop().expect("Jump stack underflow");
                 }
                 Instructions::GreaterThan => {
                     let right = self.pop()?;
@@ -240,7 +252,9 @@ impl VM {
                     self.ip += 1;
                 }
                 Instructions::Drop(variable) => {
-                    self.variables.remove(&variable);
+                    if let Some(stack) = self.variables.get_mut(&variable) {
+                        stack.pop();
+                    }
                     self.ip += 1;
                 }
                 Instructions::Halt => {
@@ -248,9 +262,6 @@ impl VM {
                         println!("{:?}", self.stack[0]);
                     }
                     break;
-                }
-                _=>{
-                    unreachable!()
                 }
             }
         }

@@ -1,6 +1,6 @@
 fnc fib(i:int):int{
     if(i<2){
-        return 1;
+        return i;
     }
     else{
         return (fib(i-1)+fib(i-2));

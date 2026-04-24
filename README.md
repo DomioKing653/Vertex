@@ -60,7 +60,7 @@ vertex/
 
 ## Current Status
 
-- **Version**: 0.0.37-alpha
+- **Version**: 0.1.32-alpha
 - **Status**: Early development
 - **License**: [MIT](license.md)
 

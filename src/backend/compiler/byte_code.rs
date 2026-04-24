@@ -137,7 +137,7 @@ impl Compiler {
         for (name, function) in functions {
             let length = self.out.len();
             self.context.enter_function_scope();
-            for argumet in function.args {
+            for argumet in &function.args {
                 let argument_type = self.context.get_type(&argumet.argument_type)?;
                 self.context.add_variable(
                     argumet.name.clone(),
@@ -151,6 +151,9 @@ impl Compiler {
             self.context.curren_return_type = function.return_type;
             for instruction in &mut function.body.clone() {
                 instruction.compile(self)?;
+            }
+            for arg in &function.args {
+                self.out.push(Instructions::Drop(format!("{}_{}", arg.name, name)));
             }
             self.out.push(Instructions::JumpOnLastOnStack);
             self.context.exit_function_scope();
@@ -726,7 +729,7 @@ impl Compilable for VariableAssignNode {
             });
         }
 
-        compiler.out.push(Instructions::SaveVar(tag));
+        compiler.out.push(Instructions::AssignVar(tag));
 
         Ok(value_type)
     }

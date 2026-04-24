@@ -20,7 +20,6 @@ impl Compilable for FunctionDefineNode {
     fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         let return_type = compiler.context.get_type(&self.return_type.clone().unwrap())?;
         Ok(return_type)
-        
     }
 
     fn fmt_with_indent(&self, f: &mut std::fmt::Formatter<'_>, indent: usize) -> std::fmt::Result {
