@@ -43,7 +43,7 @@ pub fn main() !void {{
     }
     fs::remove_file(tmp_launcher_path).unwrap();
     clrprintln!("$green|");
-    
+    clrprintln!(&format!("$green|Finished compiling with zig$reset| in {:.4}",compiler_timer.elapsed().as_secs_f32()));
 }
 
 fn find_libvm_runtime(start: &Path) -> Option<String> {
