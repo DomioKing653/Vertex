@@ -1,8 +1,7 @@
-use std::collections::{HashMap, VecDeque};
+use crate::backend::errors::linker::linker_errors::LinkerError;
 use crate::backend::linker::obj_file::ObjFile;
-
-pub fn sort_objs_bfs(mut objs: Vec<ObjFile>) -> Result<Vec<ObjFile>, String> {
-
+use std::collections::{HashMap, VecDeque};
+pub fn sort_objs_bfs(mut objs: Vec<ObjFile>) -> Result<Vec<ObjFile>, LinkerError> {
     let mut obj_map: HashMap<String, ObjFile> =
         objs.drain(..).map(|o| (o.name.clone(), o)).collect();
 
@@ -13,18 +12,16 @@ pub fn sort_objs_bfs(mut objs: Vec<ObjFile>) -> Result<Vec<ObjFile>, String> {
     for name in obj_map.keys() {
         indegree.insert(name.clone(), 0);
     }
-    
+
     for (name, obj) in &obj_map {
         for import in &obj.imports {
             if !obj_map.contains_key(import) {
-                return Err(format!(
-                    "Module '{}' imports missing module '{}'",
-                    name, import
-                ));
+                return Err(LinkerError::MissingImport {
+                    imported: import.clone(),
+                    from: name.clone(),
+                });
             }
-            graph.entry(import.clone())
-                .or_default()
-                .push(name.clone());
+            graph.entry(import.clone()).or_default().push(name.clone());
 
             *indegree.get_mut(name).unwrap() += 1;
         }
@@ -41,7 +38,6 @@ pub fn sort_objs_bfs(mut objs: Vec<ObjFile>) -> Result<Vec<ObjFile>, String> {
     let mut result = Vec::new();
 
     while let Some(name) = queue.pop_front() {
-
         let obj = obj_map.remove(&name).unwrap();
         result.push(obj);
 
@@ -59,10 +55,10 @@ pub fn sort_objs_bfs(mut objs: Vec<ObjFile>) -> Result<Vec<ObjFile>, String> {
 
     if !obj_map.is_empty() {
         let remaining: Vec<_> = obj_map.keys().cloned().collect();
-        return Err(format!(
-            "Import cycle detected between modules: {:?}",
-            remaining
-        ));
+        return Err(LinkerError::CyclicImport {
+            imported: remaining[0].clone(),
+            from: remaining[1].clone(),
+        });
     }
 
     Ok(result)

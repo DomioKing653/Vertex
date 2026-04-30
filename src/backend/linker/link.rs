@@ -3,7 +3,7 @@ use crate::backend::{
         comptime_variable_checker::comptime_value_for_check::ComptimeValueType,
         instructions::Instructions::{self, Halt},
     },
-    linker::{obj_file::ObjFile, sort_objs::sort_objs_bfs},
+    linker::{obj_file::ObjFile, patch_objs, sort_objs::sort_objs_bfs},
 };
 use std::collections::HashMap;
 
@@ -27,32 +27,12 @@ pub struct Linker;
 
 impl Linker {
     pub fn link(objects: Vec<ObjFile>) -> Vec<Instructions> {
+        // Sort objs
         let mut program: Vec<Instructions> = Vec::new();
-        let mut offset: usize = 0;
         let sorted_objects = sort_objs_bfs(objects.clone()).unwrap();
-
-        for obj in sorted_objects {
-            let mut patched = Vec::new();
-
-            for instr in obj.instructions {
-                let new_instr = match instr {
-                    Instructions::Jump(addr) => Instructions::Jump(addr + offset),
-
-                    Instructions::JumpIfTrue(addr) => Instructions::JumpIfTrue(addr + offset),
-
-                    Instructions::JumpIfFalse(addr) => Instructions::JumpIfFalse(addr + offset),
-
-                    other => other,
-                };
-
-                patched.push(new_instr);
-            }
-
-            offset += patched.len();
-            program.extend(patched);
-        }
-
-        program.push(Halt);
+        // Patch jump adresses
+        patch_objs::patch_objs_jumps(sorted_objects, &mut program);
+        program.push(Halt); // Final Halt of a program
         program
     }
 }
