@@ -134,31 +134,32 @@ impl Compiler {
             .iter()
             .map(|(name, function)| (name.clone(), function.clone()))
             .collect();
-        for (name, function) in functions {
+        for (name, mut function) in functions {
             let length = self.out.len();
             self.context.enter_function_scope();
             for argumet in &function.args {
                 let argument_type = self.context.get_type(&argumet.argument_type)?;
                 self.context.add_variable(
-                    argumet.name.clone(),
+                    argumet.name.to_string(),
                     ComptimeVariable {
-                        value_type: argument_type.clone(),
+                        value_type: argument_type,
                         is_const: false,
-                        tag: format!("{}_{}", argumet.name.clone(), name.clone()),
+                        tag: format!("{}_{}", &argumet.name, &name),
                     },
                 )?;
             }
             self.context.curren_return_type = function.return_type;
-            for instruction in &mut function.body.clone() {
+            for instruction in &mut function.body {
                 instruction.compile(self)?;
             }
             for arg in &function.args {
-                self.out.push(Instructions::Drop(format!("{}_{}", arg.name, name)));
+                self.out
+                    .push(Instructions::Drop(format!("{}_{}", arg.name, name)));
             }
             self.out.push(Instructions::JumpOnLastOnStack);
             self.context.exit_function_scope();
             self.context.curren_return_type = Void;
-            fn_jmp_addresses.insert(name.clone(), length);
+            fn_jmp_addresses.insert(name, length);
         }
         self.fix_function_jump_adresses(fn_jmp_addresses);
         self.out[jump_placeholder - 1] = Instructions::Jump(self.out.len());
@@ -337,17 +338,18 @@ impl Compilable for BinaryOpNode {
                     right: left,
                 }),
             },
-            TokenKind::EQUAL =>
-                match (&left,&right) {
-                    (l,r) if l == r=>{
-                        compiler.out.push(Instructions::Equal);
-                        Ok(Bool)
-                    }
-                    _=>Err(CompileError::InvalidBinaryOp { op: "==", left, right})
-                    
+            TokenKind::EQUAL => match (&left, &right) {
+                (l, r) if l == r => {
+                    compiler.out.push(Instructions::Equal);
+                    Ok(Bool)
                 }
-            _=>unreachable!()
-            
+                _ => Err(CompileError::InvalidBinaryOp {
+                    op: "==",
+                    left,
+                    right,
+                }),
+            },
+            _ => unreachable!(),
         }
     }
 
@@ -500,7 +502,7 @@ impl Compilable for VariableDefineNode {
     fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         if self.is_const && self.value.is_none() {
             return Err(ConstantWithoutValue {
-                name: self.var_name.clone(),
+                name: self.var_name.to_string(),
             });
         }
 
@@ -546,7 +548,7 @@ impl Compilable for VariableDefineNode {
         //NOTE:We don't check the lookup because we enable imported variable shadowing for
         //simplicity
         compiler.context.add_variable(
-            self.var_name.clone(),
+            self.var_name.to_string(),
             ComptimeVariable {
                 value_type: final_type,
                 is_const: self.is_const,
@@ -859,9 +861,11 @@ impl Compilable for FunctionCallNode {
             }
         }
     }
+
     fn fmt_with_indent(&self, _f: &mut Formatter<'_>, _indent: usize) -> fmt::Result {
         writeln!(_f, "{}{}(...)", indent_fn(_indent), self.name)
     }
+
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         Ok(())
     }
@@ -884,7 +888,7 @@ impl Compilable for FunctionCallNode {
             compiler.macros.macros.insert(self.name.clone(), mac);
             Ok(result)
         } else {
-            let my_type =compiler.context.get_fn(&self.name)?.return_type;
+            let my_type = compiler.context.get_fn(&self.name)?.return_type;
             Ok(my_type)
         }
     }
@@ -900,13 +904,12 @@ impl Compilable for ReturnNode {
         if compiler.context.function_depth > 0 {
             if let Some(mut r) = self.returns.clone() {
                 let type_of_ret = r.compile(compiler)?;
-                if type_of_ret != compiler.context.curren_return_type{
+                if type_of_ret != compiler.context.curren_return_type {
                     panic!("idk u stupid");
                 }
-            }else {
-                if compiler.context.curren_return_type!=Void {
+            } else {
+                if compiler.context.curren_return_type != Void {
                     panic!("stupid idiot")
-                    
                 }
             }
             compiler.out.push(Instructions::JumpOnLastOnStack);
@@ -926,9 +929,11 @@ impl Compilable for ImportNode {
     fn compile(&mut self, _compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         Ok(Void)
     }
+
     fn fmt_with_indent(&self, _f: &mut Formatter<'_>, _indent: usize) -> fmt::Result {
         unimplemented!()
     }
+
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
         /*
          * Lexer
@@ -971,6 +976,7 @@ impl Compilable for ImportNode {
         Ok(Void)
     }
 }
+
 impl Compilable for LoopNode {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
         todo!()
@@ -979,11 +985,11 @@ impl Compilable for LoopNode {
         Ok(())
     }
     fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
-       Ok(()) 
+        Ok(())
     }
     fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         let start_adress = compiler.out.len();
-        for node in &mut self.body  {
+        for node in &mut self.body {
             node.compile(compiler)?;
         }
         compiler.out.push(Instructions::Jump(start_adress));
@@ -992,6 +998,4 @@ impl Compilable for LoopNode {
     fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
         Ok(Void)
     }
-
-    
 }

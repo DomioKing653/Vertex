@@ -1,7 +1,5 @@
 ## editor
 /.idea
-## vm
-/vm
 ##language
 /.cargo
 /.venv

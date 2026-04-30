@@ -1,5 +1,7 @@
 sh -c "cargo clean"
 sh -c "cargo update"
-sh -c "cargo build --lib"
+cd "./backend/codegen"
+sh -c "cargo build --lib --release"
+cd "../../"
 sh -c "cargo build --bin vertexC"
 sh -c "cargo build --bin vertex"
