@@ -26,10 +26,10 @@ pub struct Symbol {
 pub struct Linker;
 
 impl Linker {
-    pub fn link(objects: Vec<ObjFile>) -> Vec<Instructions> {
+    pub fn link(objects: &mut Vec<ObjFile>) -> Vec<Instructions> {
         // Sort objs
         let mut program: Vec<Instructions> = Vec::new();
-        let sorted_objects = sort_objs_bfs(objects.clone()).unwrap();
+        let sorted_objects = sort_objs_bfs(objects).unwrap();
         // Patch jump adresses
         patch_objs::patch_objs_jumps(sorted_objects, &mut program);
         program.push(Halt); // Final Halt of a program

@@ -1,15 +1,22 @@
-use crate::backend::{
-    ast::parser::Parser, compiler::{
-        byte_code::{Compilable, Compiler},
-        instructions::Instructions,
-    }, errors::diagnostics::diagnostics::print_lexer_err, lexer::{lexer::Lexer, tokens::Token}, saving_bytes::binary_compilation
-};
 use crate::backend::linker::link::Linker;
-use crate::clrprintln;
 use crate::backend::linker::obj_file::ObjFile;
 use crate::backend::saving_bytes::save::compile_instr_to_bytes;
+use crate::backend::{
+    ast::parser::Parser,
+    compiler::{
+        byte_code::{Compilable, Compiler},
+        instructions::Instructions,
+    },
+    errors::diagnostics::diagnostics::print_lexer_err,
+    lexer::{lexer::Lexer, tokens::Token},
+    saving_bytes::binary_compilation,
+};
+use crate::clrprintln;
 use std::{
- fs,  path::{Path, PathBuf}, process, time::Instant
+    fs,
+    path::{Path, PathBuf},
+    process,
+    time::Instant,
 };
 use walkdir::WalkDir;
 fn debug_print(tokens: &Vec<Token>, ast: Box<dyn Compilable>, instructions: &Vec<Instructions>) {
@@ -43,7 +50,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
     let tokens: &Vec<Token> = match main_lexer.tokenize() {
         Err(e) => {
             clrprintln!("$red|Error at {}:", &dir);
-            print_lexer_err(e,fs::read_to_string(&dir).unwrap()); 
+            print_lexer_err(e, fs::read_to_string(&dir).unwrap());
             process::exit(-1);
         }
         Ok(tokens) => tokens,
@@ -64,7 +71,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
     if let Err(e) = parsed_ast.add_to_lookup(&mut compiler) {
         clrprintln!("$red|Error at:{}", &dir);
         clrprintln!("$red|{}", e);
-        process::exit(-3); 
+        process::exit(-3);
     }
 
     /*
@@ -96,7 +103,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
 
 //NOTE:This is just entry point for the compilation process, and it
 //shouldn't be used any further in the compilation process
-pub fn build_directory(dir: String, out: String, debug: bool, vm_path:Option<PathBuf>) {
+pub fn build_directory(dir: String, out: String, debug: bool, vm_path: Option<PathBuf>) {
     ensure_target_dir();
 
     let total_start = Instant::now();
@@ -136,7 +143,7 @@ pub fn build_directory(dir: String, out: String, debug: bool, vm_path:Option<Pat
 
     let link_start = Instant::now();
 
-    let mut final_file = Linker::link(objs);
+    let mut final_file = Linker::link(&mut objs);
 
     final_file = Compiler::optimize(final_file);
 
@@ -173,7 +180,6 @@ pub fn build_directory(dir: String, out: String, debug: bool, vm_path:Option<Pat
 
     binary_compilation::compile_to_binary(&out);
 
-
     /*
      * TOTAL TIME
      */
@@ -181,12 +187,11 @@ pub fn build_directory(dir: String, out: String, debug: bool, vm_path:Option<Pat
         "\x1b[1;32mBuild finished\x1b[0m in {:.3}s",
         total_start.elapsed().as_secs_f32()
     );
-
 }
 
 fn ensure_target_dir() {
     let target = std::env::current_dir().unwrap().join("out/bin");
-   
+
     if !&target.exists() {
         fs::create_dir_all(target).expect("Could not create the binary output directory");
     }
@@ -207,5 +212,3 @@ fn get_vertex_files_recursive(dir: &str) -> Vec<String> {
 
     files
 }
-
-
