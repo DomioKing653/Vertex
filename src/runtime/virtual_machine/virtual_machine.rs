@@ -3,7 +3,7 @@ use {
         backend::compiler::instructions::Instructions,
         runtime::virtual_machine::{
             pre_parsing::BytecodeLoader,
-            value::Value::{self, Bool, Number, StringValue},
+            value::Value::{self, Bool, Number},
         },
     },
     std::{collections::HashMap, error::Error, string::String},
@@ -46,7 +46,7 @@ impl VM {
                     let left = self.pop()?;
                     let result = match (left, right) {
                         (Number(a), Number(b)) => Number(a + b),
-                        (StringValue(a), StringValue(b)) => StringValue(a + &b),
+                        (Value::String(a), Value::String(b)) => Value::String(a + &b),
                         _ => {
                             return Err(
                                 "Type error: '+' expects number+number or string+string".into()
@@ -106,7 +106,7 @@ impl VM {
                     self.ip += 1;
                 }
                 Instructions::PushString(s) => {
-                    self.stack.push(StringValue(s));
+                    self.stack.push(Value::String(s));
                     self.ip += 1;
                 }
                 Instructions::PushJmpAdress(size) => {
@@ -118,13 +118,15 @@ impl VM {
                         .variables
                         .get(&name)
                         .ok_or_else(|| format!("Variable '{}' not found", name))?;
-                    let value = variable_stack.last().ok_or_else(|| format!("Variable stack for '{}' is empty", name))?;
+                    let value = variable_stack
+                        .last()
+                        .ok_or_else(|| format!("Variable stack for '{}' is empty", name))?;
                     self.stack.push(value.clone());
                     self.ip += 1;
                 }
                 Instructions::SaveVar(name) => {
                     let value = self.pop()?;
-                    self.variables.entry(name).or_insert_with(Vec::new).push(value);
+                    self.variables.entry(name).or_default().push(value);
                     self.ip += 1;
                 }
                 Instructions::AssignVar(name) => {
@@ -136,7 +138,10 @@ impl VM {
                     if let Some(top) = variable_stack.last_mut() {
                         *top = value;
                     } else {
-                        return Err(format!("Variable stack for '{}' is empty during assignment", name));
+                        return Err(format!(
+                            "Variable stack for '{}' is empty during assignment",
+                            name
+                        ));
                     }
                     self.ip += 1;
                 }
@@ -154,8 +159,8 @@ impl VM {
                 Instructions::WriteLnLastOnStack => {
                     let val = self.pop()?;
                     match val {
-                        StringValue(s) => println!("{}", s),
-                        Number(n) => println!("{}", n.to_string()),
+                        Value::String(s) => println!("{}", s),
+                        Number(n) => println!("{}", n),
                         _ => unreachable!(),
                     }
                     self.ip += 1;
@@ -164,7 +169,7 @@ impl VM {
                 Instructions::WriteLastOnStack => {
                     let val = self.pop()?;
                     match val {
-                        StringValue(s) => print!("{}", s),
+                        Value::String(s) => print!("{}", s),
                         Number(n) => print!("{}", n),
                         _ => unreachable!(),
                     }
@@ -248,7 +253,7 @@ impl VM {
                     std::io::stdin()
                         .read_line(&mut input)
                         .expect("Failed to read input");
-                    self.stack.push(StringValue(input.trim().to_string()));
+                    self.stack.push(Value::String(input.trim().to_string()));
                     self.ip += 1;
                 }
                 Instructions::Drop(variable) => {

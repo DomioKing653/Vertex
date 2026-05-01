@@ -18,7 +18,6 @@ pub fn patch_objs_jumps(sorted_objects: Vec<ObjFile>, program: &mut Vec<Instruct
 
             patched.push(new_instr);
         }
-
         offset += patched.len();
         program.extend(patched);
     }

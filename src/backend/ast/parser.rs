@@ -1,19 +1,21 @@
 use crate::backend::{
     ast::{
         nodes::{
-            BinaryOpNode, BoolNode, CallType::{Fn, Macro}, FloatNode, FunctionCallNode, ImportNode, LoopNode, NumberNode, ProgramNode, ReturnNode, StringNode, VariableAccessNode, VariableAssignNode, VariableDefineNode
+            BinaryOpNode, BoolNode,
+            CallType::{Fn, Macro},
+            FloatNode, FunctionCallNode, ImportNode, LoopNode, NumberNode, ProgramNode, ReturnNode,
+            StringNode, VariableAccessNode, VariableAssignNode, VariableDefineNode,
         },
-        statements::{
-            if_statement::IfStatement,
-            while_statement::WhileStatement,
-        },
+        statements::{if_statement::IfStatement, while_statement::WhileStatement},
     },
-    compiler::{byte_code::Compilable},
+    compiler::byte_code::Compilable,
     errors::parser_errors::ParserError::{self, UnexpectedToken},
     lexer::tokens::{
         Token,
         TokenKind::{
-            self, ASSIGN, CLOSINGBRACE, COLON, COMMA, CONST, DIVIDE, ELSE, EOF, FALSE, FLOAT, FNC, GREATER, IDENTIFIER, IF, LEFTPAREN, LESS, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS, RIGHTPAREN, SEMICOLON, STRING, TIMES, TRUE, USE, VALUE, VAR, WHILE,EQUAL
+            self, ASSIGN, CLOSINGBRACE, COLON, COMMA, CONST, DIVIDE, ELSE, EOF, EQUAL, FALSE,
+            FLOAT, FNC, GREATER, IDENTIFIER, IF, LEFTPAREN, LESS, MINUS, MODULO, NUMB,
+            OPENINGBRACE, PLUS, RIGHTPAREN, SEMICOLON, STRING, TIMES, TRUE, USE, VALUE, VAR, WHILE,
         },
     },
 };
@@ -42,7 +44,6 @@ impl Parser {
         self.token_idx += 1;
     }
 
-
     pub fn parse(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         let mut program: ProgramNode = ProgramNode::new();
         while self.on_top_statement && self.current_token().token_kind != EOF {
@@ -60,10 +61,9 @@ impl Parser {
                 self.advance();
                 let name_to_use = self.expect(STRING)?.token_value;
                 self.expect(SEMICOLON)?;
-                return Ok(Box::new(ImportNode {
+                Ok(Box::new(ImportNode {
                     module: name_to_use,
-                }));
-
+                }))
             }
             _ => {
                 self.on_top_statement = false;
@@ -76,7 +76,7 @@ impl Parser {
     //just on top of the program for now
     fn parse_stmt(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         match &self.current_token().token_kind {
-            TokenKind::LOOP=>{
+            TokenKind::LOOP => {
                 self.advance();
                 self.expect(OPENINGBRACE)?;
                 let mut body: Vec<Box<dyn Compilable>> = Vec::new();
@@ -90,33 +90,30 @@ impl Parser {
                     body.push(self.parse_stmt()?);
                 }
                 self.expect(CLOSINGBRACE)?;
-                Ok(Box::new(LoopNode{
-                    body
-                }))
-
+                Ok(Box::new(LoopNode { body }))
             }
-            TokenKind::RETURN=>{
+            TokenKind::RETURN => {
                 self.advance();
-                if self.current_token().token_kind == SEMICOLON{
+                if self.current_token().token_kind == SEMICOLON {
                     self.expect(SEMICOLON)?;
-                    return Ok(Box::new(ReturnNode{
-                        returns:None
-                    }))
-                }
-                else {
+                    Ok(Box::new(ReturnNode { returns: None }))
+                } else {
                     let value = self.parse_expr()?;
                     self.expect(SEMICOLON)?;
-                    return Ok(Box::new(ReturnNode{returns:Some(value)}));
+                    Ok(Box::new(ReturnNode {
+                        returns: Some(value),
+                    }))
                 }
-            },
-            TokenKind::EXP =>{
+            }
+            TokenKind::EXP => {
                 self.advance();
-                if self.current_token().token_kind == CONST || self.current_token().token_kind == VAR {
+                if self.current_token().token_kind == CONST
+                    || self.current_token().token_kind == VAR
+                {
                     let value = self.parse_var_decl_stmt(true)?;
                     self.expect(SEMICOLON)?;
                     Ok(value)
-                }
-                else if self.current_token().token_kind == FNC{
+                } else if self.current_token().token_kind == FNC {
                     let mut args = Vec::new();
                     self.advance(); //FN
                     let id = self.expect(IDENTIFIER)?;
@@ -131,7 +128,6 @@ impl Parser {
                                 name: arg_name.token_value,
                                 argument_type: arg_type.token_value,
                             });
-                           
 
                             if self.current_token().token_kind == COMMA {
                                 self.advance();
@@ -162,10 +158,10 @@ impl Parser {
                         body,
                         args,
                     }))
-                }else {
+                } else {
                     Err(UnexpectedToken {
-                        expected:VAR,
-                        found:self.current_token().token_value.clone()
+                        expected: VAR,
+                        found: self.current_token().token_value.clone(),
                     })
                 }
             }
@@ -219,11 +215,11 @@ impl Parser {
                         else_branch: Some(else_body),
                     }));
                 }
-                return Ok(Box::new(IfStatement {
+                Ok(Box::new(IfStatement {
                     condition,
                     then_branch: body,
                     else_branch: None,
-                }));
+                }))
             }
             WHILE => {
                 self.advance();
@@ -242,7 +238,7 @@ impl Parser {
                     body.push(self.parse_stmt()?);
                 }
                 self.expect(CLOSINGBRACE)?;
-                return Ok(Box::new(WhileStatement { condition, body }));
+                Ok(Box::new(WhileStatement { condition, body }))
             }
             FNC => {
                 let mut args = Vec::new();
@@ -297,35 +293,30 @@ impl Parser {
             }
         }
     }
-    fn parse_var_decl_stmt(&mut self,is_pub:bool) -> Result<Box<dyn Compilable>, ParserError> {
-        let is_const: bool;
-        if self.current_token().token_kind == CONST {
-            is_const = true;
-        } else {
-            is_const = false;
-        }
-        let id: String;
+    fn parse_var_decl_stmt(&mut self, is_pub: bool) -> Result<Box<dyn Compilable>, ParserError> {
+        let is_const: bool = self.current_token().token_kind == CONST;
+
         self.advance();
-        id = self.expect(IDENTIFIER)?.token_value;
+        let id: String = self.expect(IDENTIFIER)?.token_value;
         let mut value_type = None;
 
         if self.current_token().token_kind == COLON {
             self.advance();
             value_type = Some(self.expect(IDENTIFIER)?.token_value);
         }
-        let value: Option<Box<dyn Compilable>>;
-        if self.current_token().token_kind == ASSIGN {
+
+        let value: Option<Box<dyn Compilable>> = if self.current_token().token_kind == ASSIGN {
             self.advance();
-            value = Some(self.parse_expr()?);
+            Some(self.parse_expr()?)
         } else {
-            value = None
-        }
+            None
+        };
         Ok(Box::new(VariableDefineNode {
             value_type,
             value,
             var_name: id,
             is_const,
-            is_public:is_pub,
+            is_public: is_pub,
         }))
     }
 
@@ -335,15 +326,14 @@ impl Parser {
         //  comp
         //}
 
-        let comp = self.parse_comparison();
-        comp
+        self.parse_comparison()
     }
 
     fn parse_comparison(&mut self) -> Result<Box<dyn Compilable>, ParserError> {
         let mut factor = self.parse_term()?;
         while self.current_token().token_kind == GREATER
-        || self.current_token().token_kind == LESS
-        || self.current_token().token_kind == EQUAL
+            || self.current_token().token_kind == LESS
+            || self.current_token().token_kind == EQUAL
         {
             let operator = self.current_token().token_kind.clone();
             self.advance();
@@ -435,7 +425,7 @@ impl Parser {
                     args,
                     name,
                     call_type: if is_macro { Macro } else { Fn },
-                    return_type:None
+                    return_type: None,
                 }))
             } else {
                 Ok(Box::new(VariableAccessNode {

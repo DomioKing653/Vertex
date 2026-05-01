@@ -1,37 +1,31 @@
-use strum_macros::{EnumString, Display};
-
+use strum_macros::{Display, EnumString};
 
 //FIXME:This will probalby be neede to rework later but for now it works
-#[derive(EnumString, Display, Debug, Clone,PartialEq)]
+#[derive(EnumString, Display, Debug, Clone, PartialEq, Default)]
 pub enum ComptimeValueType {
-    #[strum(serialize="int")]
+    #[strum(serialize = "int")]
+    #[default]
     Int,
 
-    #[strum(serialize="string")]
+    #[strum(serialize = "string")]
     StringValue,
 
-    #[strum(serialize="bool")]
+    #[strum(serialize = "bool")]
     Bool,
 
-    #[strum(serialize="float")]
+    #[strum(serialize = "float")]
     Float,
 
-    #[strum(serialize="void")]
+    #[strum(serialize = "void")]
     Void,
 
-    #[strum(serialize="array{0}")]
+    #[strum(serialize = "array{0}")]
     Array(Box<ComptimeValueType>),
-}
-
-impl Default for ComptimeValueType {
-    fn default() -> Self {
-        ComptimeValueType::Int
-    }
 }
 
 impl From<ComptimeValueType> for String {
     fn from(t: ComptimeValueType) -> Self {
-        t.to_string()     
+        t.to_string()
     }
 }
 
@@ -40,4 +34,3 @@ impl ComptimeValueType {
         s.parse::<ComptimeValueType>().ok()
     }
 }
-

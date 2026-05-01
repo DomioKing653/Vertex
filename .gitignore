@@ -1,5 +1,7 @@
 ## editor
 /.idea
+/.zed
+/.vscode
 ##language
 /.cargo
 /.venv

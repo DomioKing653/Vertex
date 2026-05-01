@@ -22,8 +22,8 @@ impl BytecodeLoader {
             let opcode = self.read_u8()?;
 
             let instruction = match opcode {
-                instructions::ADD  => Instructions::Add,
-                instructions::SUB=> Instructions::Sub,
+                instructions::ADD => Instructions::Add,
+                instructions::SUB => Instructions::Sub,
                 instructions::MUL => Instructions::Mul,
                 instructions::DIV => Instructions::Div,
                 instructions::MODULO => Instructions::Modulo,
@@ -71,7 +71,7 @@ impl BytecodeLoader {
                     let value = self.read_usize()?;
                     Instructions::PushJmpAdress(value)
                 }
-                instructions::WRITE_LN=> Instructions::WriteLnLastOnStack,
+                instructions::WRITE_LN => Instructions::WriteLnLastOnStack,
                 instructions::WRITE => Instructions::WriteLastOnStack,
                 instructions::PROCESS_EXIT => Instructions::ProcessExit,
                 instructions::JUMP_IF_TRUE => {
@@ -87,9 +87,7 @@ impl BytecodeLoader {
                     let addr = self.read_u16()? as usize;
                     Instructions::JumpIfFalse(addr)
                 }
-                instructions::JUMP_LAST_ON_STACK=>{
-                    Instructions::JumpOnLastOnStack
-                }
+                instructions::JUMP_LAST_ON_STACK => Instructions::JumpOnLastOnStack,
 
                 instructions::GREATER => Instructions::GreaterThan,
                 instructions::LESS => Instructions::LessThan,

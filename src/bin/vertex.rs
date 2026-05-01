@@ -6,9 +6,10 @@ use std::{
     io::Write,
     process,
 };
-use vertex::{backend::{
-    errors::cli_errors::CommandLineError, saving_bytes::compile_tools::build_directory,
-}, clrprintln};
+use vertex::{
+    backend::{errors::cli_errors::CommandLineError, saving_bytes::compile_tools::build_directory},
+    clrprintln,
+};
 
 #[derive(Deserialize)]
 struct Config {
@@ -23,7 +24,7 @@ fn main() {
 fn run_cli() -> Result<(), CommandLineError> {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 1 {
+    if args.is_empty() {
         return Err(CommandLineError::InvalidCommand);
     }
 
@@ -64,7 +65,7 @@ fn run_cli() -> Result<(), CommandLineError> {
             "new" => {
                 if let Some(project_name) = args.get(2) {
                     // TODO: Add appropriate directory
-                    fs::create_dir(&project_name)
+                    fs::create_dir(project_name)
                         .map_err(|_| CommandLineError::ErrorCreatingDirectory)?;
 
                     fs::create_dir(format!("{}/src", &project_name))
@@ -101,7 +102,7 @@ fn run_cli() -> Result<(), CommandLineError> {
                     clrprintln!("$red|Linker error -> Cannot find main.vtx in ./src");
                     process::exit(-1);
                 });
-                build_directory("src/".to_string(), config.name, debug,None)
+                build_directory("src/".to_string(), config.name, debug, None)
             }
             "clear" => remove_dir_all("./out").unwrap(),
             _ => return Err(CommandLineError::NoSuchCommand),
@@ -112,6 +113,6 @@ fn run_cli() -> Result<(), CommandLineError> {
     Ok(())
 }
 
-fn parse_flags(args: &Vec<String>) -> bool {
+fn parse_flags(args: &[String]) -> bool {
     args.iter().any(|arg| arg == "-d")
 }

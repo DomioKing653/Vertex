@@ -28,7 +28,7 @@ impl CompileContext {
             scopes: vec![HashMap::new()],
             types: Vec::new(),
             structs: Vec::new(),
-            curren_return_type:Void,
+            curren_return_type: Void,
             is_in_function_contex: false,
             last_fn_context: 0,
             function_depth: 0,
@@ -59,7 +59,6 @@ impl CompileContext {
         }
     }
 
-
     pub fn enter_scope(&mut self) {
         self.scopes.push(HashMap::new());
     }
@@ -69,7 +68,6 @@ impl CompileContext {
             .pop()
             .expect("Fatal error: stack underflow at compilation!");
     }
-
 
     pub fn enter_function_scope(&mut self) {
         self.is_in_function_contex = true;
@@ -87,7 +85,6 @@ impl CompileContext {
         self.is_in_function_contex = self.function_depth > 0;
     }
 
-
     pub fn add_variable(
         &mut self,
         name: String,
@@ -95,12 +92,11 @@ impl CompileContext {
     ) -> Result<(), CompileError> {
         let current_scope = self.scopes.last_mut().unwrap();
 
-        if current_scope.contains_key(&name) {
-            Err(CompileError::VariableRecreation { name })
-        } else {
-            current_scope.insert(name, variable);
-            Ok(())
+        if let std::collections::hash_map::Entry::Vacant(e) = current_scope.entry(name.clone()) {
+            e.insert(variable);
+            return Ok(());
         }
+        Err(CompileError::VariableRecreation { name })
     }
 
     pub fn get_variable(&self, name: &str) -> Option<&ComptimeVariable> {
@@ -113,8 +109,7 @@ impl CompileContext {
             }
 
             return self.scopes[0].get(name);
-        }
-        else {
+        } else {
             for scope in self.scopes.iter().rev() {
                 if let Some(v) = scope.get(name) {
                     return Some(v);
@@ -122,34 +117,34 @@ impl CompileContext {
             }
         }
 
-
         None
     }
-
 
     pub fn add_function(
         &mut self,
         name: String,
         fnc: CompileTimeFunctionForCheck,
     ) -> Result<(), CompileError> {
-        if self.functions.contains_key(&name) {
-            Err(CompileError::FunctionAlredyExists { name })
-        } else {
-            self.functions.insert(name, fnc);
-            Ok(())
+        if let std::collections::hash_map::Entry::Vacant(e) = self.functions.entry(name.clone()) {
+            e.insert(fnc);
+            return Ok(());
         }
+        Err(CompileError::FunctionAlredyExists { name })
     }
 
-    pub fn get_fn(
-        &mut self,
-        name: &str,
-    ) -> Result<CompileTimeFunctionForCheck, CompileError> {
+    pub fn get_fn(&mut self, name: &str) -> Result<CompileTimeFunctionForCheck, CompileError> {
         self.functions
             .get(name)
             .cloned()
             .ok_or(CompileError::UnknownFunction {
                 name: name.to_string(),
             })
+    }
+}
+
+impl Default for CompileContext {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

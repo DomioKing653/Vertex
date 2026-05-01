@@ -1,16 +1,16 @@
+use crate::backend::errors::lexer_errors::LexerError;
 use crate::backend::lexer::tokens::TokenKind::{COMMA, FALSE, SEMICOLON, TRUE};
 use crate::{
     backend::errors::lexer_errors::LexerErrorKind,
     backend::lexer::tokens::{
         Token, TokenKind,
         TokenKind::{
-            AS, CLOSINGBRACE, COLON, CONST, DIVIDE, ELSE, EOF, ASSIGN, FLOAT, FNC, IDENTIFIER, IF,
-            LEFTPAREN, LOOP, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS, RIGHTPAREN, STR, TIMES, VAR,
-            WHILE,EQUAL
+            AS, ASSIGN, CLOSINGBRACE, COLON, CONST, DIVIDE, ELSE, EOF, EQUAL, FLOAT, FNC,
+            IDENTIFIER, IF, LEFTPAREN, LOOP, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS, RIGHTPAREN,
+            STR, TIMES, VAR, WHILE,
         },
     },
 };
-use crate::backend::errors::lexer_errors::LexerError;
 
 pub struct Lexer {
     current_char: char,
@@ -18,10 +18,9 @@ pub struct Lexer {
     token_count: usize,
     source_text: Vec<char>,
     final_tokens: Vec<Token>,
-    current_line_char:usize,
-    current_line:usize,
-    errors:Vec<LexerErrorKind>,
-
+    current_line_char: usize,
+    current_line: usize,
+    errors: Vec<LexerErrorKind>,
 }
 
 impl Lexer {
@@ -32,17 +31,16 @@ impl Lexer {
             current_char: '0',
             source_text: text.chars().collect(),
             final_tokens: Vec::new(),
-            current_line_char:1,
-            current_line:1,
-            errors:Vec::new()
-            
+            current_line_char: 1,
+            current_line: 1,
+            errors: Vec::new(),
         }
     }
-    fn consume_char(&mut self)->Result<(),LexerError>{
+    fn consume_char(&mut self) -> Result<(), LexerError> {
         Ok(())
     }
-    fn consume_white_spaces(&mut self)->Result<(),LexerError>{
-        if self.current_char == '\n'{
+    fn consume_white_spaces(&mut self) -> Result<(), LexerError> {
+        if self.current_char == '\n' {
             self.current_line += 1;
             self.current_line_char = 0;
         }
@@ -50,10 +48,13 @@ impl Lexer {
         Ok(())
     }
 
-
     pub fn tokenize(&mut self) -> Result<&Vec<Token>, LexerError> {
         if self.source_text.is_empty() {
-            return Err(LexerError{err: LexerErrorKind::EmptyFile.into(),line:0,char:0});
+            return Err(LexerError {
+                err: LexerErrorKind::EmptyFile,
+                line: 0,
+                char: 0,
+            });
         }
         self.current_char = self.source_text[0];
         while self.current_char != '\0' {
@@ -61,8 +62,8 @@ impl Lexer {
                 ' ' | '\n' | '\t' | '\r' => {
                     self.consume_white_spaces()?;
                     continue;
-                },
-                '#'=>{
+                }
+                '#' => {
                     self.consume_comment();
                 }
 
@@ -88,20 +89,19 @@ impl Lexer {
                     token_value: self.current_char.to_string(),
                 }),
                 '=' => {
-                    if self.source_text[self.token_idx+1]=='=' {
+                    if self.source_text[self.token_idx + 1] == '=' {
                         self.advance();
-                        self.final_tokens.push(Token{
-                            token_kind:EQUAL,
-                            token_value:self.current_char.to_string()
+                        self.final_tokens.push(Token {
+                            token_kind: EQUAL,
+                            token_value: self.current_char.to_string(),
                         });
-                        
-                    }else {
+                    } else {
                         self.final_tokens.push(Token {
                             token_kind: ASSIGN,
                             token_value: self.current_char.to_string(),
                         })
                     }
-                },
+                }
                 '(' => self.final_tokens.push(Token {
                     token_kind: LEFTPAREN,
                     token_value: self.current_char.to_string(),
@@ -126,13 +126,10 @@ impl Lexer {
                     token_kind: TIMES,
                     token_value: self.current_char.to_string(),
                 }),
-                '/' =>{
-                    self.final_tokens.push(Token {
+                '/' => self.final_tokens.push(Token {
                     token_kind: DIVIDE,
                     token_value: self.current_char.to_string(),
-                })
-
-                },
+                }),
                 '%' => self.final_tokens.push(Token {
                     token_kind: MODULO,
                     token_value: self.current_char.to_string(),
@@ -155,13 +152,13 @@ impl Lexer {
                         self.final_tokens.push(token);
                         continue;
                     } else {
-                        return Err(LexerError{err:LexerErrorKind::UnknownToken {
+                        return Err(LexerError {
+                            err: LexerErrorKind::UnknownToken {
                                 wrong_token: self.current_char.to_string(),
                             },
-                            line:self.current_line,
-                            char:self.current_line_char
-                        }
-                        .into());
+                            line: self.current_line,
+                            char: self.current_line_char,
+                        });
                     }
                 }
             }
@@ -176,7 +173,7 @@ impl Lexer {
 
     fn consume_comment(&mut self) {
         self.advance();
-        while self.current_char!='\n' {
+        while self.current_char != '\n' {
             self.advance();
         }
         self.advance();
@@ -201,11 +198,10 @@ impl Lexer {
                     dot_count += 1;
                     number_buffer.push('.')
                 } else {
-                    return Err(LexerError{
-                            err: LexerErrorKind::MoreDotInANumber,
-                            line:self.current_line,
-                            char:self.current_line_char,
-
+                    return Err(LexerError {
+                        err: LexerErrorKind::MoreDotInANumber,
+                        line: self.current_line,
+                        char: self.current_line_char,
                     });
                 }
             } else {
@@ -281,13 +277,13 @@ impl Lexer {
                 token_kind: TokenKind::USE,
                 token_value: text_buffer,
             },
-            "exp"=> Token {
-                token_kind:TokenKind::EXP,
+            "exp" => Token {
+                token_kind: TokenKind::EXP,
                 token_value: text_buffer,
             },
-            "return"=>Token{
-                token_kind:TokenKind::RETURN,
-                token_value:text_buffer 
+            "return" => Token {
+                token_kind: TokenKind::RETURN,
+                token_value: text_buffer,
             },
 
             _ => Token {
@@ -308,16 +304,14 @@ impl Lexer {
             self.advance();
         }
         if self.current_char == '\0' {
-            return Err(LexerError{
+            return Err(LexerError {
                 err: LexerErrorKind::UnterminatedString { text: value },
-                line:starting_line,
-                char:starting_char,
-
+                line: starting_line,
+                char: starting_char,
             });
         }
         self.advance();
         Ok(Token {
-
             token_kind: TokenKind::STRING,
             token_value: value,
         })

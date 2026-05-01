@@ -89,10 +89,10 @@ impl Macro for ProcessExitMacro {
         args: &mut [Box<dyn Compilable>],
     ) -> Result<ComptimeValueType, CompileError> {
         if args.len() != 1 {
-            return Err(CompileError::WrongMacroArgCount {
+            Err(CompileError::WrongMacroArgCount {
                 expected: 1,
                 found: args.len(),
-            });
+            })
         } else {
             let value = args[0].compile(out)?;
             match value {
@@ -121,17 +121,17 @@ impl Macro for ReadInputMacro {
         args: &mut [Box<dyn Compilable>],
     ) -> Result<ComptimeValueType, CompileError> {
         if args.len() != 1 {
-            return Err(CompileError::WrongMacroArgCount {
+            Err(CompileError::WrongMacroArgCount {
                 expected: 1,
                 found: args.len(),
-            });
+            })
         } else {
             let value = args[0].compile(out)?;
             match value {
                 StringValue => {
                     out.out.push(WriteLastOnStack);
                     out.out.push(ReadInput);
-                    return Ok(StringValue);
+                    Ok(StringValue)
                 }
                 _ => Err(TypeMismatch {
                     expected: StringValue,

@@ -1,14 +1,11 @@
-use crate::backend::ast::nodes::CallType::Macro;
-use crate::backend::ast::nodes::{LoopNode, ReturnNode};
-use crate::backend::compiler::instructions::Instructions::Drop;
-use crate::backend::errors::compiler::compiler_errors::CompileError::UndefinedVariable;
-use crate::backend::linker::link::SymbolType::Variable;
 use crate::backend::{
     ast::{
         nodes::{
-            ArrayNode, BinaryOpNode, BoolNode, CallType, FloatNode, FunctionCallNode, ImportNode,
-            NumberNode, PrefixExpressionNode, ProgramNode, StringNode, VariableAccessNode,
-            VariableAssignNode, VariableDefineNode,
+            ArrayNode, BinaryOpNode, BoolNode,
+            CallType::{self, Macro},
+            FloatNode, FunctionCallNode, ImportNode, LoopNode, NumberNode, PrefixExpressionNode,
+            ProgramNode, ReturnNode, StringNode, VariableAccessNode, VariableAssignNode,
+            VariableDefineNode,
         },
         parser::Parser,
     },
@@ -21,10 +18,14 @@ use crate::backend::{
             },
         },
         functions_compiler_context::CompileTimeFunctionForCheck,
-        instructions::Instructions::{self, Add, Div, Mul, PushBool, PushNumber, PushString, Sub},
+        instructions::Instructions::{
+            self, Add, Div, Drop, Mul, PushBool, PushNumber, PushString, Sub,
+        },
         optimization::optimize::optimize,
     },
-    errors::compiler::compiler_errors::CompileError::{self, CannotInferType, TypeMismatch},
+    errors::compiler::compiler_errors::CompileError::{
+        self, CannotInferType, TypeMismatch, UndefinedVariable,
+    },
     lexer::{
         lexer::Lexer,
         tokens::{
@@ -32,11 +33,11 @@ use crate::backend::{
             TokenKind::{self, TRUE},
         },
     },
-    linker::link::{GlobalSymbols, Symbol},
+    linker::link::{GlobalSymbols, Symbol, SymbolType::Variable},
 };
 use CompileError::ConstantWithoutValue;
-use std::collections::HashMap;
 use std::{
+    collections::HashMap,
     fmt::{self, Debug, Formatter},
     fs, process,
 };
@@ -58,7 +59,7 @@ pub trait Compilable: Debug + CompilableClone {
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result;
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError>;
     /*
-     * Types
+     *  Types
      */
     fn add_to_type_check(&self, compiler: &mut Compiler) -> Result<(), CompileError>;
     fn my_type(&self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError>;
@@ -110,7 +111,7 @@ impl Compiler {
         optimize(instructions)
     }
     pub fn exit_scope(&mut self) {
-        for (_, var_info) in self.context.scopes.last().unwrap() {
+        for var_info in self.context.scopes.last().unwrap().values() {
             self.out.push(Drop(var_info.tag.clone()));
         }
         self.context.exit_scope();
@@ -593,9 +594,9 @@ impl Compilable for VariableDefineNode {
             .insert(self.var_name.clone(), my_type.clone()?);
         if let Some(symbol) = compiler.lookup.symbols.get_mut(&self.var_name) {
             symbol.symbol_value_type = Some(my_type?);
-            return Ok(());
+            Ok(())
         } else {
-            return Ok(()); // NOTE: We dont need to do anything here becouse we are just adding
+            Ok(()) // NOTE: We dont need to do anything here becouse we are just adding
             // type to alredy existing symbol or just creating variabl
         }
     }
@@ -756,9 +757,7 @@ impl Compilable for VariableAssignNode {
 }
 impl Compilable for BoolNode {
     fn compile(&mut self, compiler: &mut Compiler) -> Result<ComptimeValueType, CompileError> {
-        compiler
-            .out
-            .push(PushBool(if self.value == TRUE { true } else { false }));
+        compiler.out.push(PushBool(self.value == TRUE));
         Ok(Bool)
     }
     fn fmt_with_indent(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
@@ -907,10 +906,8 @@ impl Compilable for ReturnNode {
                 if type_of_ret != compiler.context.curren_return_type {
                     panic!("idk u stupid");
                 }
-            } else {
-                if compiler.context.curren_return_type != Void {
-                    panic!("stupid idiot")
-                }
+            } else if compiler.context.curren_return_type != Void {
+                panic!("stupid idiot")
             }
             compiler.out.push(Instructions::JumpOnLastOnStack);
         } else {
@@ -940,7 +937,7 @@ impl Compilable for ImportNode {
          */
         let mut main_lexer: Lexer = Lexer::new(
             fs::read_to_string(format!("src/{}", &self.module))
-                .expect(format!("Cannot find module {}", &self.module).as_ref()),
+                .unwrap_or_else(|_| panic!("Cannot find module {}", &self.module)),
         );
         let tokens: &Vec<Token> = match main_lexer.tokenize() {
             Err(e) => {

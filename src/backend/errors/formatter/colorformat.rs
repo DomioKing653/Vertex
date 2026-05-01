@@ -73,7 +73,7 @@ enum Control {
 }
 
 impl Control {
-    fn to_ansi(&self) -> String {
+    fn to_ansi(self) -> String {
         match self {
             Control::Fg(c) => c.to_ansi_fg(),
             Control::Reset => "\x1b[0m".into(),
@@ -109,7 +109,7 @@ pub fn format_color_with_delim(input: &str, delim: char) -> Result<String, Color
             // Collect until terminating `delim`
             let mut tag = String::new();
             let mut closed = false;
-            while let Some(next_ch) = chars.next() {
+            for next_ch in chars.by_ref() {
                 if next_ch == delim {
                     closed = true;
                     break;

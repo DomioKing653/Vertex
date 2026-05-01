@@ -22,7 +22,6 @@ fn main() {
                 NoSuchCommand => "No such command. Run 'vertexC help for more info'",
                 _ => todo!(),
             }
-            .to_string()
         );
     }
 }
@@ -36,8 +35,8 @@ fn run_cli() -> Result<(), CommandLineError> {
 
     match args[1].as_str() {
         "build" => {
-            let (debug, source, output,path_to_vm) = parse_build_args(&args[2..])?;
-            build_directory(source, output, debug,Some(PathBuf::from(path_to_vm)));
+            let (debug, source, output, path_to_vm) = parse_build_args(&args[2..])?;
+            build_directory(source, output, debug, Some(PathBuf::from(path_to_vm)));
             Ok(())
         }
         "run" => {
@@ -48,8 +47,13 @@ fn run_cli() -> Result<(), CommandLineError> {
             Ok(())
         }
         "exec" => {
-            let (debug, source, output,path_to_vm) = parse_build_args(&args[2..])?;
-            build_directory(source.clone(), output.clone(), debug,Some(PathBuf::from(path_to_vm)));
+            let (debug, source, output, path_to_vm) = parse_build_args(&args[2..])?;
+            build_directory(
+                source.clone(),
+                output.clone(),
+                debug,
+                Some(PathBuf::from(path_to_vm)),
+            );
             run_code(&format!("out/{}", &output));
             Ok(())
         }
@@ -74,7 +78,7 @@ fn run_cli() -> Result<(), CommandLineError> {
             vertexC — compiler tool for Vertex
 
             vertexC compiles a single source file into Vertex bytecode.
-            It will remain available even after the 'vertex' project 
+            It will remain available even after the 'vertex' project
             manager is finished, mainly for testing and low-level workflows.
 
             $green|USAGE:$reset|
@@ -97,16 +101,15 @@ fn run_cli() -> Result<(), CommandLineError> {
             );
             Ok(())
         }
-        "build-lib"=>{
+        "build-lib" => {
             eprint!("Building vertex libs is still unimplemented");
             Ok(())
-
         }
         _ => Err(NoSuchCommand),
     }
 }
 
-fn parse_build_args(args: &[String]) -> Result<(bool, String, String,String), CommandLineError> {
+fn parse_build_args(args: &[String]) -> Result<(bool, String, String, String), CommandLineError> {
     let mut debug = false;
     let mut source = String::new();
     let mut output = String::new();
@@ -125,11 +128,9 @@ fn parse_build_args(args: &[String]) -> Result<(bool, String, String,String), Co
                     source = args[i].clone();
                 } else if output.is_empty() {
                     output = args[i].clone();
-                }
-                else if output.is_empty() {
+                } else if output.is_empty() {
                     path_to_vm = args[i].clone();
-                } 
-                else {
+                } else {
                     return Err(BuildHasJustTwoArg);
                 }
                 i += 1;
@@ -141,5 +142,5 @@ fn parse_build_args(args: &[String]) -> Result<(bool, String, String,String), Co
         return Err(BuildHasJustTwoArg);
     }
 
-    Ok((debug, source, output,path_to_vm))
+    Ok((debug, source, output, path_to_vm))
 }

@@ -44,7 +44,7 @@ pub fn compile_file_to_bytecode(dir: String) -> ObjFile {
      * Lexer
      */
     let mut main_lexer: Lexer = Lexer::new(
-        fs::read_to_string(&dir).expect(format!("Cannot find module {}", &dir).as_ref()),
+        fs::read_to_string(&dir).unwrap_or_else(|_| panic!("Cannot find module {}", &dir)),
     );
 
     let tokens: &Vec<Token> = match main_lexer.tokenize() {
@@ -142,17 +142,14 @@ pub fn build_directory(dir: String, out: String, debug: bool, vm_path: Option<Pa
     println!("\x1b[1mLinking\x1b[0m");
 
     let link_start = Instant::now();
-
-    let mut final_file = Linker::link(&mut objs);
-
-    final_file = Compiler::optimize(final_file);
+    let mut final_file = Linker::link(&mut objs); // Link all Obj files
+    final_file = Compiler::optimize(final_file); // Optimize the final bytecode emmited by the Linker
 
     if debug {
         println!("\n--- BYTECODE ---");
-        let mut i = 0;
-        for instr in &final_file {
+        let i = 0;
+        for (i, instr) in final_file.iter().enumerate() {
             println!("{}->{:?}", i, instr);
-            i += 1;
         }
         println!("----------------\n");
     }
@@ -201,12 +198,11 @@ fn get_vertex_files_recursive(dir: &str) -> Vec<String> {
     let mut files = Vec::new();
     for entry in WalkDir::new(dir) {
         let entry = entry.expect("Cannot read entry");
-        if entry.file_type().is_file() {
-            if let Some(ext) = entry.path().extension() {
-                if ext == "vtx" {
-                    files.push(entry.path().to_string_lossy().to_string());
-                }
-            }
+        if entry.file_type().is_file()
+            && let Some(ext) = entry.path().extension()
+            && ext == "vtx"
+        {
+            files.push(entry.path().to_string_lossy().to_string());
         }
     }
 
