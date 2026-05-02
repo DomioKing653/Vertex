@@ -7,8 +7,8 @@ use crate::backend::{
         byte_code::{Compilable, Compiler},
         instructions::Instructions,
     },
-    errors::diagnostics::diagnostics::print_lexer_err,
-    lexer::{lexer::Lexer, tokens::Token},
+    errors::diagnostics::lexer_error_print::print_lexer_err,
+    lexer::{tokenizer::Lexer, tokens::Token},
     saving_bytes::binary_compilation,
 };
 use crate::clrprintln;

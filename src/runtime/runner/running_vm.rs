@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use crate::runtime::virtual_machine::virtual_machine::VM;
+use crate::runtime::virtual_machine::vm::VM;
 
 pub fn run_code(path: &str) {
     let program_time_start = Instant::now();

@@ -27,7 +27,7 @@ use crate::backend::{
         self, CannotInferType, TypeMismatch, UndefinedVariable,
     },
     lexer::{
-        lexer::Lexer,
+        tokenizer::Lexer,
         tokens::{
             Token,
             TokenKind::{self, TRUE},
