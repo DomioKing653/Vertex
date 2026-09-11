@@ -64,4 +64,6 @@ pub enum CompileError {
 
     #[error("[E0016]Need to have specifed return type at function {function_name}")]
     NeedToHaveSpecifiedReturnType { function_name: String },
+    #[error("[E0017]Cannot find module:{module_name}")]
+    CannotFindModule { module_name: String },
 }

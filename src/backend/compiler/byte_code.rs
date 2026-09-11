@@ -952,18 +952,19 @@ impl Compilable for ImportNode {
     }
 
     fn add_to_lookup(&self, compiler: &mut Compiler) -> Result<(), CompileError> {
-        let parsed_ast = compiler
-            .context
-            .parsed_files
-            .get(&self.module)
-            .unwrap_or_else(|| panic!("Cannot find module {}", self.module))
-            .clone();
+        let parsed_ast = compiler.context.parsed_files.get(&self.module).cloned();
 
-        /*
-        Lookup and type check
-        */
-        parsed_ast.add_to_lookup(compiler)?;
-        parsed_ast.add_to_type_check(compiler)?;
+        let ast = match parsed_ast {
+            Some(ast) => ast,
+            None => {
+                return Err(CompileError::CannotFindModule {
+                    module_name: self.module.clone(),
+                });
+            }
+        };
+
+        ast.add_to_lookup(compiler)?;
+        ast.add_to_type_check(compiler)?;
         compiler.imports.push(self.module.clone()); //Normalized to lib.vtx, tools/lib.vtx etc.
         //without the src/ prefix
         Ok(())
