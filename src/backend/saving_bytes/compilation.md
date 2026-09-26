@@ -21,4 +21,4 @@ After its compiled we remove the temporary launcher   `tmp_launcher.zig` with:
 ```rust    
 fs::remove_file(tmp_launcher_path).unwrap();
 ```
-And the compilation process is finished
+The executable file made by zig is the final compiled file that you can ship.
