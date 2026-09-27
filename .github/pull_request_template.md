@@ -9,7 +9,6 @@ Closes #
 
 ## Checklist
 
-- [ ] branched off `dev`
+- [ ] branched off `main`
 - [ ] `cargo test --all-features` passes
-- [ ] `cargo clippy -- -D warnings` passes
 - [ ] docs updated if needed
