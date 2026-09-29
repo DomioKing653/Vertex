@@ -46,8 +46,17 @@ pub enum TokenKind {
     VALUE,
 }
 
+// Span is for tracking line, column, and file where error occurred.
+#[derive(Clone, Debug)]
+pub struct Span {
+    pub file_name: String,
+    pub line: usize,
+    pub col: usize,
+}
+
 #[derive(Clone, Debug)]
 pub struct Token {
     pub token_kind: TokenKind,
     pub token_value: String,
+    pub span: Span,
 }

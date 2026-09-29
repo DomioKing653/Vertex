@@ -12,3 +12,7 @@
 /out
 src/runtime_lib/target/
 /tmp_launcher.zig
+# env file
+*git_repo_setup.sh
+# Test vertex code
+/testingCode/priyanshu/
