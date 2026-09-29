@@ -3,7 +3,7 @@ use crate::backend::lexer::tokens::TokenKind::{COMMA, FALSE, SEMICOLON, TRUE};
 use crate::{
     backend::errors::lexer_errors::LexerErrorKind,
     backend::lexer::tokens::{
-        Token, TokenKind,
+        Span, Token, TokenKind,
         TokenKind::{
             AS, ASSIGN, CLOSINGBRACE, COLON, CONST, DIVIDE, ELSE, EOF, EQUAL, FLOAT, FNC,
             IDENTIFIER, IF, LEFTPAREN, LOOP, MINUS, MODULO, NUMB, OPENINGBRACE, PLUS, RIGHTPAREN,
@@ -21,6 +21,7 @@ pub struct Lexer {
     current_line_char: usize,
     current_line: usize,
     errors: Vec<LexerErrorKind>,
+    file_name: String,
 }
 
 impl Lexer {
@@ -34,6 +35,7 @@ impl Lexer {
             current_line_char: 1,
             current_line: 1,
             errors: Vec::new(),
+            file_name: String::new(),
         }
     }
     fn consume_char(&mut self) -> Result<(), LexerError> {
@@ -46,6 +48,15 @@ impl Lexer {
         }
         self.advance();
         Ok(())
+    }
+
+    // Function to create Span
+    fn make_span(&self) -> Span {
+        Span {
+            file_name: self.file_name.clone(), // clone to get a deep copy of file_name
+            line: self.current_line,
+            col: self.current_line_char,
+        }
     }
 
     pub fn tokenize(mut self) -> Result<Vec<Token>, LexerError> {
@@ -75,18 +86,22 @@ impl Lexer {
                 ':' => self.final_tokens.push(Token {
                     token_kind: COLON,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '+' => self.final_tokens.push(Token {
                     token_kind: PLUS,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 ',' => self.final_tokens.push(Token {
                     token_kind: COMMA,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 ';' => self.final_tokens.push(Token {
                     token_kind: SEMICOLON,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '=' => {
                     if self.source_text[self.token_idx + 1] == '=' {
@@ -94,53 +109,65 @@ impl Lexer {
                         self.final_tokens.push(Token {
                             token_kind: EQUAL,
                             token_value: self.current_char.to_string(),
+                            span: self.make_span(),
                         });
                     } else {
                         self.final_tokens.push(Token {
                             token_kind: ASSIGN,
                             token_value: self.current_char.to_string(),
+                            span: self.make_span(),
                         })
                     }
                 }
                 '(' => self.final_tokens.push(Token {
                     token_kind: LEFTPAREN,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 ')' => self.final_tokens.push(Token {
                     token_kind: RIGHTPAREN,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '{' => self.final_tokens.push(Token {
                     token_kind: OPENINGBRACE,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '}' => self.final_tokens.push(Token {
                     token_kind: CLOSINGBRACE,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '-' => self.final_tokens.push(Token {
                     token_kind: MINUS,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '*' => self.final_tokens.push(Token {
                     token_kind: TIMES,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '/' => self.final_tokens.push(Token {
                     token_kind: DIVIDE,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '%' => self.final_tokens.push(Token {
                     token_kind: MODULO,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '>' => self.final_tokens.push(Token {
                     token_kind: TokenKind::GREATER,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 '<' => self.final_tokens.push(Token {
                     token_kind: TokenKind::LESS,
                     token_value: self.current_char.to_string(),
+                    span: self.make_span(),
                 }),
                 _ => {
                     if self.current_char.is_alphabetic() {
@@ -167,6 +194,7 @@ impl Lexer {
         self.final_tokens.push(Token {
             token_kind: EOF,
             token_value: "EOF".to_string(),
+            span: self.make_span(),
         });
         Ok(self.final_tokens)
     }
@@ -190,6 +218,7 @@ impl Lexer {
         }
     }
     fn create_number_token(&mut self) -> Result<Token, LexerError> {
+        let span: Span = self.make_span(); // make_span at the start of number.
         let mut number_buffer: String = String::new();
         let mut dot_count: usize = 0;
         while self.current_char.is_numeric() || self.current_char == '.' {
@@ -212,9 +241,11 @@ impl Lexer {
         Ok(Token {
             token_kind: if dot_count < 1 { NUMB } else { FLOAT },
             token_value: number_buffer,
+            span,
         })
     }
     fn create_text_token(&mut self) -> Token {
+        let span: Span = self.make_span(); // make_span at the start of text.
         let mut text_buffer: String = String::new();
         while self.current_char.is_alphabetic()
             || self.current_char.is_numeric()
@@ -228,72 +259,89 @@ impl Lexer {
             "var" => Token {
                 token_kind: VAR,
                 token_value: text_buffer,
+                span,
             },
             "fnc" => Token {
                 token_kind: FNC,
                 token_value: text_buffer,
+                span,
             },
             "str" => Token {
                 token_kind: STR,
                 token_value: text_buffer,
+                span,
             },
             "const" => Token {
                 token_kind: CONST,
                 token_value: text_buffer,
+                span,
             },
             "true" => Token {
                 token_value: text_buffer,
                 token_kind: TRUE,
+                span,
             },
             "false" => Token {
                 token_value: text_buffer,
                 token_kind: FALSE,
+                span,
             },
             "if" => Token {
                 token_kind: IF,
                 token_value: text_buffer,
+                span,
             },
             "else" => Token {
                 token_kind: ELSE,
                 token_value: text_buffer,
+                span,
             },
             "loop" => Token {
                 token_kind: LOOP,
                 token_value: text_buffer,
+                span,
             },
             "while" => Token {
                 token_kind: WHILE,
                 token_value: text_buffer,
+                span,
             },
             "as" => Token {
                 token_kind: AS,
                 token_value: text_buffer,
+                span,
             },
             "undef" => Token {
                 token_kind: TokenKind::UNDEF,
                 token_value: text_buffer,
+                span,
             },
             "use" => Token {
                 token_kind: TokenKind::USE,
                 token_value: text_buffer,
+                span,
             },
             "exp" => Token {
                 token_kind: TokenKind::EXP,
                 token_value: text_buffer,
+                span,
             },
             "return" => Token {
                 token_kind: TokenKind::RETURN,
                 token_value: text_buffer,
+                span,
             },
 
             _ => Token {
                 token_kind: IDENTIFIER,
                 token_value: text_buffer,
+                span,
             },
         }
     }
 
     fn read_string(&mut self) -> Result<Token, LexerError> {
+        let span: Span = self.make_span(); // make_span before going inside the quotes.
         self.advance();
         let starting_line = self.current_line;
         let starting_char = self.current_line_char;
@@ -314,6 +362,7 @@ impl Lexer {
         Ok(Token {
             token_kind: TokenKind::STRING,
             token_value: value,
+            span,
         })
     }
 }
