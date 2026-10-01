@@ -11,6 +11,7 @@ use crate::{
         },
     },
 };
+use std::path::PathBuf;
 
 pub struct Lexer {
     current_char: char,
@@ -21,11 +22,11 @@ pub struct Lexer {
     current_line_char: usize,
     current_line: usize,
     errors: Vec<LexerErrorKind>,
-    file_name: String,
+    file_name: PathBuf,
 }
 
 impl Lexer {
-    pub fn new(text: String) -> Self {
+    pub fn new(text: String, file_name: PathBuf) -> Self {
         Self {
             token_idx: 0,
             token_count: text.len(),
@@ -35,7 +36,7 @@ impl Lexer {
             current_line_char: 1,
             current_line: 1,
             errors: Vec::new(),
-            file_name: String::new(),
+            file_name,
         }
     }
     fn consume_char(&mut self) -> Result<(), LexerError> {
@@ -52,11 +53,13 @@ impl Lexer {
 
     // Function to create Span
     fn make_span(&self) -> Span {
-        Span {
-            file_name: self.file_name.clone(), // clone to get a deep copy of file_name
+        let span: Span = Span {
+            file_name: self.file_name.clone(), // clone to get a ownership of file_name
             line: self.current_line,
             col: self.current_line_char,
-        }
+        };
+        println!("Span for {}: {:?}", self.current_char, span);
+        span
     }
 
     pub fn tokenize(mut self) -> Result<Vec<Token>, LexerError> {
