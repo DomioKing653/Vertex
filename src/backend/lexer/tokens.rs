@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     //MATH
@@ -49,7 +51,7 @@ pub enum TokenKind {
 // Span is for tracking line, column, and file where error occurred.
 #[derive(Clone, Debug)]
 pub struct Span {
-    pub file_name: String,
+    pub file_name: PathBuf,
     pub line: usize,
     pub col: usize,
 }

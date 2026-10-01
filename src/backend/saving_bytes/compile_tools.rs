@@ -144,7 +144,9 @@ async fn lex_project_parallel(
         lexer_join_set.spawn(async move {
             let content =
                 fs::read_to_string(&file).unwrap_or_else(|_| panic!("Cannot find module {}", file));
-            let main_lexer: Lexer = Lexer::new(content.clone());
+            let abs_path = fs::canonicalize(&file).unwrap_or_else(|_| PathBuf::from(&file));
+            let main_lexer: Lexer = Lexer::new(content.clone(), abs_path); // pass file path
+            // also so that Lexer can have also have the file that was generating error.
             let result = main_lexer.tokenize();
             (file, base_dir, prefix, content, result)
         });
