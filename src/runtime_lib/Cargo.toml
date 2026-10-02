@@ -5,7 +5,7 @@ edition = "2021"
 
 [profile.release]
 panic = "abort"
-[profile.debug]
+[profile.dev]
 panic = "abort"
 
 [lib]
