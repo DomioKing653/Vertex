@@ -156,7 +156,13 @@ async fn lex_project_parallel(
         let (file, base_dir, prefix, content, result) = res.unwrap();
         match result {
             Err(e) => {
-                clrprintln!("$red|Error at {}:", file);
+                // clrprintln!("$red|Error at {}:", file);
+                clrprintln!(
+                    "$red|Error at : $cyan|{}, line:{}, col:{}",
+                    e.span.file_name.display(),
+                    e.span.line,
+                    e.span.col
+                );
                 print_lexer_err(e, content);
                 process::exit(-1);
             }

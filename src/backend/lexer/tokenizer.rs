@@ -67,8 +67,9 @@ impl Lexer {
         if self.source_text.is_empty() {
             return Err(LexerError {
                 err: LexerErrorKind::EmptyFile,
-                line: 0,
-                char: 0,
+                // line: 0,
+                // char: 0,
+                span: self.make_span(),
             });
         }
         self.current_char = self.source_text[0];
@@ -187,8 +188,9 @@ impl Lexer {
                             err: LexerErrorKind::UnknownToken {
                                 wrong_token: self.current_char.to_string(),
                             },
-                            line: self.current_line,
-                            char: self.current_line_char,
+                            // line: self.current_line,
+                            // char: self.current_line_char,
+                            span: self.make_span(),
                         });
                     }
                 }
@@ -233,8 +235,9 @@ impl Lexer {
                 } else {
                     return Err(LexerError {
                         err: LexerErrorKind::MoreDotInANumber,
-                        line: self.current_line,
-                        char: self.current_line_char,
+                        // line: self.current_line,
+                        // char: self.current_line_char,
+                        span,
                     });
                 }
             } else {
@@ -358,8 +361,9 @@ impl Lexer {
         if self.current_char == '\0' {
             return Err(LexerError {
                 err: LexerErrorKind::UnterminatedString { text: value },
-                line: starting_line,
-                char: starting_char,
+                // line: starting_line,
+                // char: starting_char,
+                span,
             });
         }
         self.advance();
