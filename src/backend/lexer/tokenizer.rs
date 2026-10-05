@@ -58,7 +58,8 @@ impl Lexer {
             line: self.current_line,
             col: self.current_line_char,
         };
-        println!("Span for {}: {:?}", self.current_char, span);
+        // println!("Span for {}: {:?}", self.current_char, span); // Uncomment this if want to
+        // check out what span looks like.
         span
     }
 
