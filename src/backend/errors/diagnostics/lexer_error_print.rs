@@ -2,13 +2,22 @@ use crate::backend::errors::lexer_errors::LexerError;
 use crate::clrprintln;
 
 pub fn print_lexer_err(err: LexerError, src_file: String) {
-    clrprintln!("$red|error:$reset| {}", err);
+    clrprintln!("$red|error:$reset| {}", err.err);
+    // clrprintln!(
+    //     "$cyan| --> {}:{}{}",
+    //     err.span.file_name.display(),
+    //     err.span.line,
+    //     err.span.col
+    // );
 
     let lines: Vec<&str> = src_file.lines().collect();
-    let line_idx = err.line.saturating_sub(1);
-    let col_idx = err.char.saturating_sub(1);
+    // let line_idx = err.line.saturating_sub(1);
+    let line_idx = err.span.line.saturating_sub(1);
+    // let col_idx = err.char.saturating_sub(1);
+    let col_idx = err.span.col.saturating_sub(1);
 
-    let line_width = (err.line + 1).to_string().len();
+    // let line_width = (err.line + 1).to_string().len();
+    let line_width = (err.span.line + 1).to_string().len();
 
     if let Some(prev) = line_idx.checked_sub(1).and_then(|i| lines.get(i)) {
         clrprintln!(
@@ -33,7 +42,8 @@ pub fn print_lexer_err(err: LexerError, src_file: String) {
 
         clrprintln!(
             "$cyan|{:>width$}$reset| | {}",
-            err.line,
+            // err.line,
+            err.span.line,
             highlighted,
             width = line_width
         );
@@ -50,7 +60,8 @@ pub fn print_lexer_err(err: LexerError, src_file: String) {
     if let Some(next) = lines.get(line_idx + 1) {
         clrprintln!(
             "$cyan|{:>width$}$reset| | {}",
-            err.line + 1,
+            // err.line + 1,
+            err.span.line + 1,
             next,
             width = line_width
         );

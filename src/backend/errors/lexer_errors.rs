@@ -1,3 +1,4 @@
+use crate::backend::lexer::tokens::Span;
 use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum LexerErrorKind {
@@ -11,9 +12,12 @@ pub enum LexerErrorKind {
     EmptyFile,
 }
 #[derive(Error, Debug)]
-#[error("ln:{line},ch:{char} -> {err}")]
+// #[error("ln:{line},ch:{char} -> {err}")]
+#[error("{span:?} -> {err}")]
 pub struct LexerError {
     pub err: LexerErrorKind,
-    pub line: usize,
-    pub char: usize,
+    // pub line: usize,
+    // pub char: usize,
+    // Addition:
+    pub span: Span,
 }
