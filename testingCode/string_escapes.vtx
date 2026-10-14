@@ -1,0 +1,8 @@
+writeLn!("Escaped newline:");
+writeLn!("hello\nworld");
+writeLn!("Raw newline:");
+writeLn!("hello
+world");
+writeLn!("Literal backslash: hello\\nworld");
+writeLn!("Quoted word: \"Vertex\"");
+writeLn!("Tab: left\tright");

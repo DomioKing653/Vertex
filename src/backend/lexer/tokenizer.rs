@@ -43,10 +43,6 @@ impl Lexer {
         Ok(())
     }
     fn consume_white_spaces(&mut self) -> Result<(), LexerError> {
-        if self.current_char == '\n' {
-            self.current_line += 1;
-            self.current_line_char = 0;
-        }
         self.advance();
         Ok(())
     }
@@ -215,8 +211,13 @@ impl Lexer {
     //FIXME:Out of bounds error if í,é,č etc is in the identifier name
 
     fn advance(&mut self) {
+        if self.current_char == '\n' {
+            self.current_line += 1;
+            self.current_line_char = 1;
+        } else {
+            self.current_line_char += 1;
+        }
         self.token_idx += 1;
-        self.current_line_char += 1;
         if self.token_idx >= self.token_count {
             self.current_char = '\0';
         } else {
@@ -350,19 +351,32 @@ impl Lexer {
     fn read_string(&mut self) -> Result<Token, LexerError> {
         let span: Span = self.make_span(); // make_span before going inside the quotes.
         self.advance();
-        let starting_line = self.current_line;
-        let starting_char = self.current_line_char;
 
         let mut value = String::new();
         while self.current_char != '"' && self.current_char != '\0' {
-            value.push(self.current_char);
+            if self.current_char == '\\' {
+                self.advance();
+                match self.current_char {
+                    'n' => value.push('\n'),
+                    'r' => value.push('\r'),
+                    't' => value.push('\t'),
+                    '\\' => value.push('\\'),
+                    '"' => value.push('"'),
+                    '\0' => break,
+                    other => {
+                        // Keep unrecognized escapes unchanged for compatibility.
+                        value.push('\\');
+                        value.push(other);
+                    }
+                }
+            } else {
+                value.push(self.current_char);
+            }
             self.advance();
         }
         if self.current_char == '\0' {
             return Err(LexerError {
                 err: LexerErrorKind::UnterminatedString { text: value },
-                // line: starting_line,
-                // char: starting_char,
                 span,
             });
         }
@@ -372,5 +386,94 @@ impl Lexer {
             token_value: value,
             span,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
+        Lexer::new(source.to_owned(), PathBuf::from("test.vtx")).tokenize()
+    }
+
+    #[test]
+    fn missing_opening_quote_reports_actual_unterminated_string_position() {
+        let error = tokenize("writeLn!(Hello World!\");\nwrite!(\"Hello World!\");\n")
+            .expect_err("missing quote must be rejected");
+
+        assert!(matches!(error.err, LexerErrorKind::UnterminatedString { .. }));
+        assert_eq!((error.span.line, error.span.col), (2, 21));
+        assert_eq!(
+            error.err.to_string(),
+            "Unterminated string: expected a closing double quote"
+        );
+    }
+
+    #[test]
+    fn multiline_string_preserves_value_and_tracks_following_token_position() {
+        let tokens = tokenize("\"first\nsecond\" next").expect("valid multiline string");
+
+        assert_eq!(tokens[0].token_kind, TokenKind::STRING);
+        assert_eq!(tokens[0].token_value, "first\nsecond");
+        assert_eq!((tokens[0].span.line, tokens[0].span.col), (1, 1));
+        assert_eq!(tokens[1].token_kind, IDENTIFIER);
+        assert_eq!((tokens[1].span.line, tokens[1].span.col), (2, 9));
+    }
+
+    #[test]
+    fn whitespace_counts_each_newline_once() {
+        for source in ["first\nnext", "first\r\nnext"] {
+            let tokens = tokenize(source).expect("valid identifiers");
+            assert_eq!((tokens[1].span.line, tokens[1].span.col), (2, 1));
+        }
+    }
+
+    #[test]
+    fn unterminated_string_reports_its_opening_quote() {
+        let error = tokenize("  \"oops").expect_err("missing closing quote");
+
+        assert!(matches!(error.err, LexerErrorKind::UnterminatedString { .. }));
+        assert_eq!((error.span.line, error.span.col), (1, 3));
+    }
+
+    #[test]
+    fn escaped_newline_decodes_without_changing_source_line() {
+        let tokens = tokenize(r#""hello\nworld" next"#).expect("valid escaped newline");
+
+        assert_eq!(tokens[0].token_value, "hello\nworld");
+        assert_eq!((tokens[1].span.line, tokens[1].span.col), (1, 16));
+    }
+
+    #[test]
+    fn common_string_escapes_are_decoded() {
+        let tokens = tokenize(r#""tab\treturn\rquote\"slash\\""#)
+            .expect("valid string escapes");
+
+        assert_eq!(tokens[0].token_value, "tab\treturn\rquote\"slash\\");
+    }
+
+    #[test]
+    fn escaped_backslash_keeps_literal_newline_sequence() {
+        let tokens = tokenize(r#""hello\\nworld""#).expect("valid literal backslash");
+
+        assert_eq!(tokens[0].token_value, r"hello\nworld");
+    }
+
+    #[test]
+    fn unrecognized_escapes_are_preserved() {
+        let tokens = tokenize(r#""path\q""#).expect("compatible unknown escape");
+
+        assert_eq!(tokens[0].token_value, r"path\q");
+    }
+
+    #[test]
+    fn unfinished_escape_and_escaped_closing_quote_are_unterminated() {
+        for source in ["  \"oops\\", "  \"oops\\\""] {
+            let error = tokenize(source).expect_err("missing unescaped closing quote");
+
+            assert!(matches!(error.err, LexerErrorKind::UnterminatedString { .. }));
+            assert_eq!((error.span.line, error.span.col), (1, 3));
+        }
     }
 }

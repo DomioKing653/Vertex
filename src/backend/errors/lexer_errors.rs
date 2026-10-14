@@ -6,7 +6,7 @@ pub enum LexerErrorKind {
     UnknownToken { wrong_token: String },
     #[error("Cannot have more dots in a number")]
     MoreDotInANumber,
-    #[error("Unterminated string:{text}")]
+    #[error("Unterminated string: expected a closing double quote")]
     UnterminatedString { text: String },
     #[error("Cannot parse empty file")]
     EmptyFile,
