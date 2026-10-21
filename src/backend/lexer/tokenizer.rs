@@ -174,6 +174,7 @@ impl Lexer {
                     if self.current_char.is_alphabetic() {
                         let token = self.create_text_token();
                         self.final_tokens.push(token);
+                        // println!("{:?}", self.final_tokens); // Uncomment this line for token dump
                         continue;
                     } else if self.current_char.is_numeric() {
                         let token = self.create_number_token()?;
@@ -374,7 +375,8 @@ impl Lexer {
             }
             self.advance();
         }
-        if self.current_char == '\0' {
+        if self.current_char == '\0' || (self.current_line != span.line && self.current_char == '"')
+        {
             return Err(LexerError {
                 err: LexerErrorKind::UnterminatedString { text: value },
                 span,
@@ -402,7 +404,10 @@ mod tests {
         let error = tokenize("writeLn!(Hello World!\");\nwrite!(\"Hello World!\");\n")
             .expect_err("missing quote must be rejected");
 
-        assert!(matches!(error.err, LexerErrorKind::UnterminatedString { .. }));
+        assert!(matches!(
+            error.err,
+            LexerErrorKind::UnterminatedString { .. }
+        ));
         assert_eq!((error.span.line, error.span.col), (2, 21));
         assert_eq!(
             error.err.to_string(),
@@ -433,7 +438,10 @@ mod tests {
     fn unterminated_string_reports_its_opening_quote() {
         let error = tokenize("  \"oops").expect_err("missing closing quote");
 
-        assert!(matches!(error.err, LexerErrorKind::UnterminatedString { .. }));
+        assert!(matches!(
+            error.err,
+            LexerErrorKind::UnterminatedString { .. }
+        ));
         assert_eq!((error.span.line, error.span.col), (1, 3));
     }
 
@@ -447,8 +455,7 @@ mod tests {
 
     #[test]
     fn common_string_escapes_are_decoded() {
-        let tokens = tokenize(r#""tab\treturn\rquote\"slash\\""#)
-            .expect("valid string escapes");
+        let tokens = tokenize(r#""tab\treturn\rquote\"slash\\""#).expect("valid string escapes");
 
         assert_eq!(tokens[0].token_value, "tab\treturn\rquote\"slash\\");
     }
@@ -472,7 +479,10 @@ mod tests {
         for source in ["  \"oops\\", "  \"oops\\\""] {
             let error = tokenize(source).expect_err("missing unescaped closing quote");
 
-            assert!(matches!(error.err, LexerErrorKind::UnterminatedString { .. }));
+            assert!(matches!(
+                error.err,
+                LexerErrorKind::UnterminatedString { .. }
+            ));
             assert_eq!((error.span.line, error.span.col), (1, 3));
         }
     }

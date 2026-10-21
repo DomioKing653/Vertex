@@ -1,0 +1,2 @@
+writeLn!(Hello World!");
+write!(Hello World!");
